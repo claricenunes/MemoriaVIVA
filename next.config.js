@@ -1,4 +1,11 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {};
+const path = require('path')
 
-module.exports = nextConfig;
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  outputFileTracingRoot: path.join(__dirname),
+  experimental: {
+    optimizePackageImports: ['@radix-ui/react-dialog', '@radix-ui/react-select'],
+  },
+}
+
+module.exports = nextConfig

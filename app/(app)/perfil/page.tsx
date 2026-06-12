@@ -1,0 +1,130 @@
+import GlassCard from '@/components/shared/glass-card'
+import LogoutButton from '@/components/auth/logout-button'
+
+const PREFS = [
+  { label: 'Tamanho da fonte',      value: 'Grande',           icon: 'text-size'       },
+  { label: 'Tema',                  value: 'Claro',            icon: 'sun'             },
+  { label: 'Notificações',          value: 'Ativadas',         icon: 'bell'            },
+  { label: 'Lembrete de remédios',  value: '15 min antes',     icon: 'clock'           },
+]
+
+const ACCOUNT_ITEMS = [
+  { label: 'Família e acessos',     icon: 'users',             href: '#' },
+  { label: 'Privacidade',           icon: 'shield-lock',       href: '#' },
+  { label: 'Fazer backup',          icon: 'cloud-upload',      href: '#' },
+  { label: 'Ajuda e suporte',       icon: 'help-circle',       href: '#' },
+]
+
+export default function PerfilPage() {
+  return (
+    <main className="mv-shell">
+      <header className="mv-fade-in" style={{ padding: '8px 4px 4px' }}>
+        <p className="mv-greeting">
+          <i className="ti ti-user-circle" aria-hidden="true" style={{ marginRight: 6 }} />
+          Sua conta
+        </p>
+        <h1 className="mv-title">Meu Perfil</h1>
+      </header>
+
+      <GlassCard variant="hero" style={{ marginTop: 'var(--mv-space-5)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--mv-space-4)' }}>
+          <div style={{
+            width: 72, height: 72, borderRadius: '50%',
+            background: 'linear-gradient(135deg, var(--mv-terracota-soft), var(--mv-salvia-soft))',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 32, flexShrink: 0, border: '3px solid white',
+            boxShadow: 'var(--mv-shadow-sm)',
+          }}>
+            👩
+          </div>
+          <div>
+            <h2 style={{ margin: 0, fontSize: 'var(--mv-text-lg)', fontWeight: 700, color: 'var(--mv-text-primary)' }}>Clarice Oliveira</h2>
+            <p style={{ margin: '3px 0 0', fontSize: 'var(--mv-text-sm)', color: 'var(--mv-text-secondary)' }}>
+              📍 Belo Horizonte, MG
+            </p>
+            <p style={{ margin: '3px 0 0', fontSize: 'var(--mv-text-xs)', color: 'var(--mv-text-tertiary)' }}>
+              Membro desde junho de 2026
+            </p>
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--mv-space-3)', marginTop: 'var(--mv-space-4)' }}>
+          {[
+            { label: 'Memórias',   value: 6 },
+            { label: 'Dias ativos', value: 7 },
+            { label: 'Remédios',   value: 4 },
+          ].map(({ label, value }) => (
+            <div key={label} style={{ background: 'rgba(0,0,0,0.04)', borderRadius: 'var(--mv-radius-md)', padding: '10px', textAlign: 'center' }}>
+              <div style={{ fontSize: 'var(--mv-text-xl)', fontWeight: 700, color: 'var(--mv-text-primary)' }}>{value}</div>
+              <div style={{ fontSize: 'var(--mv-text-xs)', color: 'var(--mv-text-tertiary)', marginTop: 2 }}>{label}</div>
+            </div>
+          ))}
+        </div>
+
+        <button type="button" className="mv-btn mv-btn--ghost mv-btn--full" style={{ marginTop: 'var(--mv-space-4)' }}>
+          <i className="ti ti-edit" aria-hidden="true" />
+          Editar perfil
+        </button>
+      </GlassCard>
+
+      <p style={{ margin: 'var(--mv-space-5) 0 var(--mv-space-3) 4px', fontSize: 'var(--mv-text-xs)', fontWeight: 700, color: 'var(--mv-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+        Preferências
+      </p>
+      <GlassCard style={{ padding: 0, overflow: 'hidden' }}>
+        {PREFS.map((pref, i) => (
+          <div key={pref.label} style={{ display: 'flex', alignItems: 'center', gap: 'var(--mv-space-3)', padding: '14px 16px', borderBottom: i < PREFS.length - 1 ? '1px solid var(--mv-border)' : 'none' }}>
+            <div className="mv-icon-blob mv-icon-blob--azul" style={{ width: 36, height: 36, flexShrink: 0 }}>
+              <i className={`ti ti-${pref.icon}`} aria-hidden="true" style={{ fontSize: 15 }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontWeight: 600, color: 'var(--mv-text-primary)', fontSize: 'var(--mv-text-sm)' }}>{pref.label}</div>
+            </div>
+            <span style={{ fontSize: 'var(--mv-text-xs)', color: 'var(--mv-text-secondary)', background: 'var(--mv-bg-secondary)', padding: '4px 10px', borderRadius: 'var(--mv-radius-sm)' }}>
+              {pref.value}
+            </span>
+            <i className="ti ti-chevron-right" aria-hidden="true" style={{ color: 'var(--mv-text-tertiary)', fontSize: 14 }} />
+          </div>
+        ))}
+      </GlassCard>
+
+      <p style={{ margin: 'var(--mv-space-5) 0 var(--mv-space-3) 4px', fontSize: 'var(--mv-text-xs)', fontWeight: 700, color: 'var(--mv-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+        Conta
+      </p>
+      <GlassCard style={{ padding: 0, overflow: 'hidden' }}>
+        {ACCOUNT_ITEMS.map((item, i) => (
+          <a key={item.href + item.label} href={item.href} style={{ display: 'flex', alignItems: 'center', gap: 'var(--mv-space-3)', padding: '14px 16px', textDecoration: 'none', borderBottom: i < ACCOUNT_ITEMS.length - 1 ? '1px solid var(--mv-border)' : 'none' }}>
+            <div className={`mv-icon-blob ${(item as { danger?: boolean }).danger ? 'mv-icon-blob--terracota' : 'mv-icon-blob--salvia'}`} style={{ width: 36, height: 36, flexShrink: 0 }}>
+              <i className={`ti ti-${item.icon}`} aria-hidden="true" style={{ fontSize: 15 }} />
+            </div>
+            <span style={{ flex: 1, fontWeight: 600, fontSize: 'var(--mv-text-sm)', color: (item as { danger?: boolean }).danger ? 'var(--mv-terracota-deep)' : 'var(--mv-text-primary)' }}>
+              {item.label}
+            </span>
+            <i className="ti ti-chevron-right" aria-hidden="true" style={{ color: 'var(--mv-text-tertiary)', fontSize: 14 }} />
+          </a>
+        ))}
+      </GlassCard>
+
+      <GlassCard style={{ padding: 0, overflow: 'hidden', marginTop: 'var(--mv-space-3)' }}>
+        <LogoutButton
+          style={{
+            display: 'flex', alignItems: 'center', gap: 'var(--mv-space-3)',
+            padding: '14px 16px', width: '100%', background: 'none', border: 'none',
+            cursor: 'pointer', textAlign: 'left',
+          }}
+        >
+          <div className="mv-icon-blob mv-icon-blob--terracota" style={{ width: 36, height: 36, flexShrink: 0 }}>
+            <i className="ti ti-logout" aria-hidden="true" style={{ fontSize: 15 }} />
+          </div>
+          <span style={{ flex: 1, fontWeight: 600, fontSize: 'var(--mv-text-sm)', color: 'var(--mv-terracota-deep)' }}>
+            Sair
+          </span>
+          <i className="ti ti-chevron-right" aria-hidden="true" style={{ color: 'var(--mv-text-tertiary)', fontSize: 14 }} />
+        </LogoutButton>
+      </GlassCard>
+
+      <p style={{ textAlign: 'center', fontSize: 'var(--mv-text-xs)', color: 'var(--mv-text-tertiary)', padding: 'var(--mv-space-6) 0 var(--mv-space-4)' }}>
+        Memória Viva v1.0 • eiclaricenunes@gmail.com
+      </p>
+    </main>
+  )
+}
