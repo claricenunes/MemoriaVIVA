@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import GlassCard from '@/components/shared/glass-card'
 import PageHeader from '@/components/shared/page-header'
+import BackButton from '@/components/shared/back-button'
 
 const FUNCIONALIDADES = [
   { emoji: '💊', titulo: 'Dúvidas sobre remédios',   desc: 'Para que serve, efeitos colaterais, interações' },
@@ -20,9 +21,7 @@ export default function AssistentePage() {
 
   return (
     <main className="mv-shell">
-      <Link href="/mais" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'var(--mv-text-sm)', color: 'var(--mv-text-tertiary)', textDecoration: 'none', marginBottom: 'var(--mv-space-3)', marginTop: 2 }}>
-        <i className="ti ti-arrow-left" aria-hidden="true" /> Mais
-      </Link>
+      <BackButton href="/mais" label="Mais" />
 
       <PageHeader icon="robot" color="azul" title="Assistente" subtitle="Sua companhia inteligente" />
 

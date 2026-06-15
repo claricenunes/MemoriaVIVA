@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import GlassCard from '@/components/shared/glass-card'
 import PageHeader from '@/components/shared/page-header'
+import BackButton from '@/components/shared/back-button'
 
 const EMOJIS_P = ['👩', '👨', '👵', '👴', '👧', '👦', '🧒', '👶', '👩‍⚕️', '👨‍⚕️', '🧕', '🧑']
 const RELACOES = ['Marido / Esposa', 'Filho / Filha', 'Neto / Neta', 'Irmão / Irmã', 'Amigo / Amiga', 'Médico / Médica', 'Cuidador/a', 'Vizinho / Vizinha', 'Outro']
@@ -49,9 +50,7 @@ export default function QuemEQuemPage() {
 
   return (
     <main className="mv-shell">
-      <Link href="/mais" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'var(--mv-text-sm)', color: 'var(--mv-text-tertiary)', textDecoration: 'none', marginBottom: 'var(--mv-space-3)', marginTop: 2 }}>
-        <i className="ti ti-arrow-left" aria-hidden="true" /> Mais
-      </Link>
+      <BackButton href="/mais" label="Mais" />
 
       <PageHeader icon="users" color="azul" title="Quem é Quem" />
 

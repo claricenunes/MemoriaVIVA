@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import GlassCard from '@/components/shared/glass-card'
 import PageHeader from '@/components/shared/page-header'
+import BackButton from '@/components/shared/back-button'
 
 type Contato = { id: string; nome: string; telefone: string; relacao: string }
 type DadosEmergencia = {
@@ -75,9 +76,7 @@ export default function EmergenciaPage() {
 
   return (
     <main className="mv-shell">
-      <Link href="/mais" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'var(--mv-text-sm)', color: 'var(--mv-text-tertiary)', textDecoration: 'none', marginBottom: 'var(--mv-space-3)', marginTop: 2 }}>
-        <i className="ti ti-arrow-left" aria-hidden="true" /> Mais
-      </Link>
+      <BackButton href="/mais" label="Mais" />
 
       <PageHeader icon="ambulance" color="terracota" title="Emergência" subtitle="Dados médicos e contatos de urgência" />
 

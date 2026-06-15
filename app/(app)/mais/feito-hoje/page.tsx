@@ -1,10 +1,11 @@
 'use client'
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
+import { useState, useEffect, useCallback } from 'react'
 import GlassCard from '@/components/shared/glass-card'
 import PageHeader from '@/components/shared/page-header'
+import BackButton from '@/components/shared/back-button'
 
 const EMOJIS = ['⭐', '🎯', '💪', '🌟', '✅', '🏆', '🎉', '🌸', '💚', '🌺']
+const CONFETTI = ['🎉', '⭐', '🌟', '✨', '🎊', '💛', '🌸', '💪']
 
 function getHoje() {
   return new Date().toISOString().split('T')[0]
@@ -16,10 +17,13 @@ function formatarData(iso: string) {
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
+type Particle = { id: number; emoji: string; x: number; delay: number }
+
 export default function FeitoHojePage() {
-  const [wins, setWins]   = useState<string[]>([])
-  const [input, setInput] = useState('')
-  const [pronto, setPronto] = useState(false)
+  const [wins, setWins]       = useState<string[]>([])
+  const [input, setInput]     = useState('')
+  const [pronto, setPronto]   = useState(false)
+  const [particles, setParticles] = useState<Particle[]>([])
   const hoje = getHoje()
 
   useEffect(() => {
@@ -35,11 +39,23 @@ export default function FeitoHojePage() {
     localStorage.setItem(`mv-feito-${hoje}`, JSON.stringify(next))
   }
 
+  function burst() {
+    const ps: Particle[] = Array.from({ length: 10 }, (_, i) => ({
+      id: Date.now() + i,
+      emoji: CONFETTI[i % CONFETTI.length],
+      x: 10 + Math.random() * 80,
+      delay: i * 60,
+    }))
+    setParticles(ps)
+    setTimeout(() => setParticles([]), 1400)
+  }
+
   function add() {
     const texto = input.trim()
     if (!texto) return
     salvar([...wins, texto])
     setInput('')
+    burst()
   }
 
   function remove(i: number) {
@@ -55,10 +71,29 @@ export default function FeitoHojePage() {
     `${wins.length} conquistas hoje!`
 
   return (
-    <main className="mv-shell">
-      <Link href="/mais" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'var(--mv-text-sm)', color: 'var(--mv-text-tertiary)', textDecoration: 'none', marginBottom: 'var(--mv-space-3)', marginTop: 2 }}>
-        <i className="ti ti-arrow-left" aria-hidden="true" /> Mais
-      </Link>
+    <main className="mv-shell" style={{ position: 'relative', overflow: 'hidden' }}>
+      {/* Confetti particles */}
+      {particles.map((p) => (
+        <span
+          key={p.id}
+          aria-hidden="true"
+          style={{
+            position: 'fixed',
+            left: p.x + '%',
+            bottom: '120px',
+            fontSize: 24,
+            pointerEvents: 'none',
+            zIndex: 999,
+            animation: 'mv-confetti-burst 1.2s ease-out forwards',
+            animationDelay: p.delay + 'ms',
+            opacity: 0,
+          }}
+        >
+          {p.emoji}
+        </span>
+      ))}
+
+      <BackButton href="/mais" label="Mais" />
 
       <PageHeader icon="star" color="ambar" title="Feito Hoje" subtitle={formatarData(hoje)} />
 

@@ -2,6 +2,7 @@ import GlassCard from '@/components/shared/glass-card'
 import PageHeader from '@/components/shared/page-header'
 import LogoutButton from '@/components/auth/logout-button'
 import { FontSizeToggle } from '@/components/accessibility/font-size-provider'
+import ModoFamiliar from '@/components/shared/modo-familiar'
 
 const PREFS = [
   { label: 'Tema',                  value: 'Claro',            icon: 'sun'   },
@@ -95,6 +96,26 @@ export default function PerfilPage() {
             <i className="ti ti-chevron-right" aria-hidden="true" style={{ color: 'var(--mv-text-tertiary)', fontSize: 14 }} />
           </div>
         ))}
+      </GlassCard>
+
+      <p style={{ margin: 'var(--mv-space-5) 0 var(--mv-space-3) 4px', fontSize: 'var(--mv-text-xs)', fontWeight: 700, color: 'var(--mv-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+        Modo Familiar
+      </p>
+      <GlassCard style={{ marginBottom: 'var(--mv-space-2)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--mv-space-3)', marginBottom: 'var(--mv-space-3)' }}>
+          <div className="mv-icon-blob mv-icon-blob--salvia" style={{ width: 40, height: 40, flexShrink: 0 }}>
+            <i className="ti ti-users" aria-hidden="true" style={{ fontSize: 18 }} />
+          </div>
+          <div>
+            <p style={{ margin: 0, fontWeight: 700, fontSize: 'var(--mv-text-sm)', color: 'var(--mv-text-primary)' }}>
+              Compartilhar com familiar
+            </p>
+            <p style={{ margin: '2px 0 0', fontSize: 11, color: 'var(--mv-text-secondary)' }}>
+              Acesso de visualização — em breve
+            </p>
+          </div>
+        </div>
+        <ModoFamiliar />
       </GlassCard>
 
       <p style={{ margin: 'var(--mv-space-5) 0 var(--mv-space-3) 4px', fontSize: 'var(--mv-text-xs)', fontWeight: 700, color: 'var(--mv-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>

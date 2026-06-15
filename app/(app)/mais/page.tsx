@@ -6,7 +6,6 @@ const SECTIONS = [
   {
     title: 'Memória & História',
     items: [
-      { icon: 'photo-heart',   label: 'Minhas Memórias',    color: 'terracota', href: '/memorias',          desc: 'Fotos e histórias guardadas' },
       { icon: 'book-2',        label: 'Minha História',      color: 'terracota', href: '/mais/historia',     desc: 'Narrativa da sua vida' },
       { icon: 'star',          label: 'Feito Hoje',          color: 'ambar',     href: '/mais/feito-hoje',   desc: 'Conquistas do dia' },
     ],
@@ -21,7 +20,7 @@ const SECTIONS = [
   {
     title: 'Dia a Dia',
     items: [
-      { icon: 'pill',          label: 'Medicamentos',        color: 'salvia',    href: '/medicamentos',       desc: 'Seus remédios e horários' },
+      { icon: 'shopping-cart', label: 'Lista de Compras',    color: 'salvia',    href: '/mais/lista-de-compras', desc: 'Itens que você precisa comprar' },
       { icon: 'map-pin',       label: 'Onde Guardei',        color: 'salvia',    href: '/mais/onde-guardei', desc: 'Não perca mais nada' },
       { icon: 'robot',         label: 'Assistente',          color: 'azul',      href: '/mais/assistente',   desc: 'Ajuda com inteligência artificial' },
     ],

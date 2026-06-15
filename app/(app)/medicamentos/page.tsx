@@ -6,6 +6,7 @@ import GlassCard from '@/components/shared/glass-card'
 import PageHeader from '@/components/shared/page-header'
 import SectionTitle from '@/components/shared/section-title'
 import FloatingAction from '@/components/shared/floating-action'
+import NotificacoesBanner from '@/components/shared/notificacoes-banner'
 import type { Medicamento, MedicamentoRegistro } from '@/lib/types/database'
 
 function getMedStatus(horario: string, tomado: boolean): 'tomado' | 'proximo' | 'pendente' {
@@ -17,9 +18,21 @@ function getMedStatus(horario: string, tomado: boolean): 'tomado' | 'proximo' | 
 }
 
 const STATUS_COLOR = {
-  tomado:  { color: 'var(--mv-salvia-deep)', bg: 'var(--mv-salvia-soft)' },
-  proximo: { color: 'var(--mv-azul-deep)',   bg: 'var(--mv-azul-soft)'   },
-  pendente:{ color: 'var(--mv-ambar-deep)',  bg: 'var(--mv-ambar-soft)'  },
+  tomado:  { color: '#fff',                  bg: '#22A55A'                },
+  proximo: { color: '#fff',                  bg: '#2B7EC9'                },
+  pendente:{ color: '#5C3A00',               bg: '#F59E0B'                },
+}
+
+const STATUS_BLOB: Record<string, string> = {
+  tomado:   'mv-icon-blob--salvia',
+  proximo:  'mv-icon-blob--azul',
+  pendente: 'mv-icon-blob--ambar',
+}
+
+const STATUS_LABEL: Record<string, string> = {
+  tomado:   '✓ Tomado',
+  proximo:  '⏱ Próximo',
+  pendente: '! Pendente',
 }
 
 type MedDia = { med: Medicamento; horario: string; status: 'tomado' | 'proximo' | 'pendente' }
@@ -95,6 +108,8 @@ export default async function MedicamentosPage() {
         </div>
       )}
 
+      <NotificacoesBanner />
+
       <GlassCard variant="hero" style={{ marginTop: 'var(--mv-space-5)' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--mv-space-3)' }}>
           {[
@@ -139,22 +154,24 @@ export default async function MedicamentosPage() {
                 borderBottom:  i < medsDia.length - 1 ? '1px solid var(--mv-border)' : 'none',
               }}
             >
-              <div className="mv-icon-blob mv-icon-blob--ambar" style={{ width: 44, height: 44, flexShrink: 0 }}>
-                <i className="ti ti-pill" aria-hidden="true" style={{ fontSize: 18 }} />
+              <div className={`mv-icon-blob ${STATUS_BLOB[status]}`} style={{ width: 48, height: 48, flexShrink: 0 }}>
+                <i className="ti ti-pill" aria-hidden="true" style={{ fontSize: 20 }} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 600, color: 'var(--mv-text-primary)', marginBottom: 2 }}>{med.nome}</div>
+                <div style={{ fontWeight: 700, color: 'var(--mv-text-primary)', marginBottom: 2 }}>{med.nome}</div>
                 <div style={{ fontSize: 'var(--mv-text-xs)', color: 'var(--mv-text-secondary)' }}>
                   {med.dosagem} • {horario}
                 </div>
-              </div>
-              {status === 'tomado' ? (
-                <span style={{ fontSize: 'var(--mv-text-xs)', fontWeight: 700, color: 'var(--mv-salvia-deep)', background: 'var(--mv-salvia-soft)', padding: '4px 10px', borderRadius: 'var(--mv-radius-sm)', flexShrink: 0 }}>
-                  ✓ Tomado
+                <span style={{
+                  display: 'inline-block', marginTop: 5,
+                  fontSize: 11, fontWeight: 700,
+                  color: STATUS_COLOR[status].color, background: STATUS_COLOR[status].bg,
+                  padding: '3px 9px', borderRadius: 20,
+                }}>
+                  {STATUS_LABEL[status]}
                 </span>
-              ) : (
-                <TomadoButton medicamentoId={med.id} horario={horario} />
-              )}
+              </div>
+              {status !== 'tomado' && <TomadoButton medicamentoId={med.id} horario={horario} />}
             </div>
           ))}
         </GlassCard>

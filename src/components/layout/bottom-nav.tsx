@@ -15,6 +15,7 @@ const MAIS_PATHS = [
   '/noticias', '/exercicios', '/perfil',
   '/mais/historia', '/mais/onde-guardei', '/mais/quem-e-quem',
   '/mais/feito-hoje', '/mais/emergencia', '/mais/assistente',
+  '/mais/lista-de-compras',
 ]
 
 function isActive(href: string, pathname: string): boolean {

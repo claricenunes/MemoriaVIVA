@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import GlassCard from '@/components/shared/glass-card'
 import PageHeader from '@/components/shared/page-header'
+import BackButton from '@/components/shared/back-button'
 
 const EMOJIS = ['👩', '👩‍🦳', '👩‍🦱', '👵', '🧕', '👨', '👴', '🧑', '🧒']
 
@@ -80,9 +81,7 @@ export default function HistoriaPage() {
 
   return (
     <main className="mv-shell">
-      <Link href="/mais" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 'var(--mv-text-sm)', color: 'var(--mv-text-tertiary)', textDecoration: 'none', marginBottom: 'var(--mv-space-3)', marginTop: 2 }}>
-        <i className="ti ti-arrow-left" aria-hidden="true" /> Mais
-      </Link>
+      <BackButton href="/mais" label="Mais" />
 
       <PageHeader icon="book-2" color="terracota" title="Minha História" />
 
