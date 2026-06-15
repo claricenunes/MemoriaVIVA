@@ -3,12 +3,11 @@ import EmotionCheckin from '@/components/shared/emotion-checkin'
 import EventCard from '@/components/shared/event-card'
 import MedicationCard from '@/components/shared/medication-card'
 import SectionTitle from '@/components/shared/section-title'
-import FloatingAction from '@/components/shared/floating-action'
 
 export default function DashboardPage() {
   return (
     <main className="mv-shell">
-      <HeroCard name="Clarice" date="Hoje é sexta-feira, 12 de junho" />
+      <HeroCard name="Clarice" />
 
       <div style={{ marginTop: 'var(--mv-space-5)' }}>
         <EmotionCheckin />
@@ -58,7 +57,6 @@ export default function DashboardPage() {
       <MedicationCard name="Losartana"  dosage="1 comprimido" time="Tomado • 08:00"  status="tomado" />
       <MedicationCard name="Metformina" dosage="1 comprimido" time="Próximo • 18:00" status="pendente" />
 
-      <FloatingAction variant="pill" label="Precisa de ajuda?" />
     </main>
   )
 }

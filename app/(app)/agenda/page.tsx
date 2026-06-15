@@ -1,40 +1,15 @@
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import GlassCard from '@/components/shared/glass-card'
+import PageHeader from '@/components/shared/page-header'
 import SectionTitle from '@/components/shared/section-title'
 import FloatingAction from '@/components/shared/floating-action'
+import CalendarioClient from '@/components/agenda/calendario-client'
+import NovoEventoForm from '@/components/agenda/novo-evento-form'
+import DeletarEventoBtn from '@/components/agenda/deletar-evento-btn'
+import type { AgendaEvento } from '@/lib/types/database'
 
-const WEEKDAYS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-
-const CALENDAR_DAYS: { day: number | null; dots: string[] }[] = [
-  { day: null, dots: [] },
-  { day: 1,  dots: [] }, { day: 2,  dots: [] }, { day: 3,  dots: [] },
-  { day: 4,  dots: [] }, { day: 5,  dots: ['ambar'] }, { day: 6,  dots: [] },
-  { day: 7,  dots: [] }, { day: 8,  dots: [] }, { day: 9,  dots: ['azul'] },
-  { day: 10, dots: ['terracota'] }, { day: 11, dots: [] }, { day: 12, dots: ['azul', 'terracota'] },
-  { day: 13, dots: [] }, { day: 14, dots: ['salvia'] }, { day: 15, dots: [] },
-  { day: 16, dots: ['terracota'] }, { day: 17, dots: [] }, { day: 18, dots: [] },
-  { day: 19, dots: ['ambar'] }, { day: 20, dots: [] }, { day: 21, dots: ['salvia'] },
-  { day: 22, dots: [] }, { day: 23, dots: [] }, { day: 24, dots: ['azul'] },
-  { day: 25, dots: [] }, { day: 26, dots: [] }, { day: 27, dots: [] },
-  { day: 28, dots: ['terracota'] }, { day: 29, dots: [] }, { day: 30, dots: ['salvia'] },
-]
-
-const TODAY = 12
-
-const CATEGORIES = [
-  { label: 'Todos',       active: true  },
-  { label: '🔴 Médico',  active: false },
-  { label: '🔵 Psicóloga',active: false },
-  { label: '🟡 Estudos', active: false },
-  { label: '🟢 Social',  active: false },
-  { label: '🟣 Missa',   active: false },
-]
-
-const DOT_COLOR: Record<string, string> = {
-  terracota: 'var(--mv-terracota)',
-  azul:      'var(--mv-azul-suave)',
-  ambar:     'var(--mv-ambar)',
-  salvia:    'var(--mv-salvia)',
-}
+const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 
 const BLOB_CLASS: Record<string, string> = {
   terracota: 'mv-icon-blob--terracota',
@@ -43,80 +18,154 @@ const BLOB_CLASS: Record<string, string> = {
   salvia:    'mv-icon-blob--salvia',
 }
 
-const EVENTS_TODAY = [
-  { time: '09:00', label: 'Psicóloga Dra. Maria', details: 'Centro de Saúde Mental', icon: 'brain',       category: 'azul' },
-  { time: '14:00', label: 'Médico Dr. Carlos',    details: 'Clínica São Lucas',        icon: 'stethoscope', category: 'terracota' },
-  { time: '18:30', label: 'Remédio — Losartana',  details: '1 comprimido',             icon: 'pill',        category: 'salvia' },
-]
-
 const LEGEND = [
-  { color: 'var(--mv-terracota)',  label: 'Médico' },
-  { color: 'var(--mv-azul-suave)', label: 'Psicóloga' },
-  { color: 'var(--mv-ambar)',      label: 'Estudos/Fé' },
-  { color: 'var(--mv-salvia)',     label: 'Social/Saúde' },
+  { color: 'var(--mv-terracota)',   label: 'Médico'     },
+  { color: 'var(--mv-azul-suave)',  label: 'Psicóloga'  },
+  { color: 'var(--mv-ambar)',       label: 'Estudos/Fé' },
+  { color: 'var(--mv-salvia)',      label: 'Social'     },
 ]
 
-export default function AgendaPage() {
+function formatDiaLabel(iso: string, hoje: string) {
+  if (iso === hoje) return 'Hoje'
+  const d = new Date(iso + 'T12:00:00')
+  const s = d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+export default async function AgendaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ dia?: string; mes?: string }>
+}) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { dia, mes: mesParam } = await searchParams
+  const hoje    = new Date().toISOString().split('T')[0]
+  const diaAlvo = dia ?? hoje
+
+  const now  = mesParam ? new Date(mesParam + '-01T12:00:00') : new Date()
+  const ano  = now.getFullYear()
+  const mes  = now.getMonth()
+  const pad  = (n: number) => String(n).padStart(2, '0')
+  const inicioMes = `${ano}-${pad(mes + 1)}-01`
+  const fimMes    = `${ano}-${pad(mes + 1)}-${new Date(ano, mes + 1, 0).getDate()}`
+
+  let eventosMes: AgendaEvento[]  = []
+  let eventosDia: AgendaEvento[]  = []
+  let dbSetupNeeded = false
+
+  try {
+    const [r1, r2] = await Promise.all([
+      supabase
+        .from('agenda_eventos')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('data', inicioMes)
+        .lte('data', fimMes)
+        .order('hora', { nullsFirst: false }),
+      supabase
+        .from('agenda_eventos')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('data', diaAlvo)
+        .order('hora', { nullsFirst: false }),
+    ])
+
+    if (r1.error?.code === '42P01') {
+      dbSetupNeeded = true
+    } else {
+      eventosMes = (r1.data ?? []) as AgendaEvento[]
+      eventosDia = (r2.data ?? []) as AgendaEvento[]
+    }
+  } catch (e) {
+    console.error('[AgendaPage] query error:', e)
+    dbSetupNeeded = true
+  }
+
+  // Monta mapa data → cores únicas para os dots do calendário
+  const dotMap = new Map<string, Set<string>>()
+  for (const ev of eventosMes) {
+    if (!dotMap.has(ev.data)) dotMap.set(ev.data, new Set())
+    dotMap.get(ev.data)!.add(ev.cor)
+  }
+  const diasComEventos = Array.from(dotMap.entries()).map(([data, cores]) => ({
+    data,
+    cores: Array.from(cores),
+  }))
+
   return (
     <main className="mv-shell">
-      <header className="mv-fade-in" style={{ padding: '8px 4px 4px' }}>
-        <p className="mv-greeting">
-          <i className="ti ti-calendar" aria-hidden="true" style={{ marginRight: 6 }} />
-          Sua agenda
-        </p>
-        <h1 className="mv-title">Junho de 2026</h1>
-      </header>
+      <PageHeader icon="calendar" color="azul" title="Agenda" subtitle={MESES[mes] + ' de ' + ano} />
 
-      <div className="mv-chips" style={{ marginTop: 'var(--mv-space-5)' }}>
-        {CATEGORIES.map((cat) => (
-          <button key={cat.label} type="button" className={`mv-chip${cat.active ? ' mv-chip--active' : ''}`}>
-            {cat.label}
-          </button>
-        ))}
-      </div>
+      {dbSetupNeeded && (
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', gap: 12,
+          padding: '14px 16px', borderRadius: 'var(--mv-radius-md)',
+          background: 'var(--mv-ambar-soft)', marginTop: 'var(--mv-space-4)',
+          border: '1.5px solid var(--mv-ambar)',
+        }}>
+          <i className="ti ti-tool" aria-hidden="true" style={{ fontSize: 20, color: 'var(--mv-ambar-deep)', flexShrink: 0, marginTop: 2 }} />
+          <div>
+            <p style={{ margin: '0 0 4px', fontWeight: 700, fontSize: 'var(--mv-text-sm)', color: 'var(--mv-ambar-deep)' }}>
+              Banco de dados não configurado
+            </p>
+            <p style={{ margin: 0, fontSize: 'var(--mv-text-xs)', color: 'var(--mv-ambar-deep)', lineHeight: 1.6 }}>
+              Execute <strong>supabase/migrations/002_agenda_memorias.sql</strong> no Supabase SQL Editor.
+            </p>
+          </div>
+        </div>
+      )}
 
-      <GlassCard>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4, marginBottom: 8 }}>
-          {WEEKDAYS.map((d) => (
-            <div key={d} style={{ textAlign: 'center', fontSize: 'var(--mv-text-xs)', color: 'var(--mv-text-tertiary)', fontWeight: 600, paddingBottom: 4 }}>
-              {d}
-            </div>
-          ))}
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
-          {CALENDAR_DAYS.map((cell, i) => (
-            <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '3px 0' }}>
-              {cell.day !== null && (
-                <>
-                  <span className={cell.day === TODAY ? 'mv-calendar-day mv-calendar-day--today' : 'mv-calendar-day'} style={{ width: 34, height: 34 }}>
-                    {cell.day}
-                  </span>
-                  <div style={{ display: 'flex', gap: 2, marginTop: 3, minHeight: 6 }}>
-                    {cell.dots.map((color, di) => (
-                      <span key={di} style={{ width: 5, height: 5, borderRadius: '50%', background: DOT_COLOR[color] ?? 'var(--mv-text-tertiary)', display: 'block' }} />
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          ))}
-        </div>
+      {/* Calendário — client component interativo, props vindas do servidor */}
+      <GlassCard style={{ marginTop: 'var(--mv-space-5)' }}>
+        <CalendarioClient
+          ano={ano}
+          mes={mes}
+          diasComEventos={diasComEventos}
+          diaSelecionado={diaAlvo}
+        />
       </GlassCard>
 
-      <SectionTitle title="Hoje, sexta-feira" />
+      <SectionTitle title={formatDiaLabel(diaAlvo, hoje)} />
+
       <GlassCard>
-        {EVENTS_TODAY.map((event) => (
-          <div className="mv-agenda-item" key={event.time}>
-            <span className="mv-agenda-time">{event.time}</span>
-            <div className={`mv-icon-blob ${BLOB_CLASS[event.category] ?? 'mv-icon-blob--azul'}`} style={{ width: 42, height: 42 }}>
-              <i className={`ti ti-${event.icon}`} aria-hidden="true" style={{ fontSize: 18 }} />
+        {eventosDia.length === 0 ? (
+          <p style={{ margin: 0, textAlign: 'center', color: 'var(--mv-text-tertiary)', fontSize: 'var(--mv-text-sm)', padding: 'var(--mv-space-3) 0' }}>
+            {dbSetupNeeded ? 'Configure o banco de dados para ver sua agenda.' : 'Nenhum compromisso neste dia.'}
+          </p>
+        ) : (
+          eventosDia.map((ev, i) => (
+            <div
+              key={ev.id}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 'var(--mv-space-3)',
+                paddingBottom: i < eventosDia.length - 1 ? 'var(--mv-space-3)' : 0,
+                marginBottom:  i < eventosDia.length - 1 ? 'var(--mv-space-3)' : 0,
+                borderBottom:  i < eventosDia.length - 1 ? '1px solid var(--mv-border)' : 'none',
+              }}
+            >
+              <span className="mv-agenda-time" style={{ minWidth: 42, flexShrink: 0 }}>
+                {ev.hora ? ev.hora.slice(0, 5) : '—'}
+              </span>
+              <div className={`mv-icon-blob ${BLOB_CLASS[ev.cor] ?? 'mv-icon-blob--azul'}`} style={{ width: 42, height: 42, flexShrink: 0 }}>
+                <i className={`ti ti-${ev.icone}`} aria-hidden="true" style={{ fontSize: 18 }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div className="mv-agenda-label">{ev.titulo}</div>
+                {ev.detalhes && (
+                  <div style={{ fontSize: 'var(--mv-text-xs)', color: 'var(--mv-text-secondary)', marginTop: 2 }}>
+                    {ev.detalhes}
+                  </div>
+                )}
+              </div>
+              <DeletarEventoBtn eventoId={ev.id} />
             </div>
-            <div style={{ flex: 1 }}>
-              <div className="mv-agenda-label">{event.label}</div>
-              <div style={{ fontSize: 'var(--mv-text-xs)', color: 'var(--mv-text-secondary)', marginTop: 2 }}>{event.details}</div>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
+
+        <NovoEventoForm />
       </GlassCard>
 
       <div style={{ display: 'flex', gap: 'var(--mv-space-5)', flexWrap: 'wrap', padding: 'var(--mv-space-3) var(--mv-space-1) var(--mv-space-4)' }}>
@@ -127,11 +176,6 @@ export default function AgendaPage() {
           </div>
         ))}
       </div>
-
-      <button type="button" className="mv-btn mv-btn--primary mv-btn--full">
-        <i className="ti ti-plus" aria-hidden="true" />
-        Novo compromisso
-      </button>
 
       <FloatingAction variant="add" label="Novo compromisso" />
     </main>

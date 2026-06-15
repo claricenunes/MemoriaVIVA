@@ -27,7 +27,7 @@ export default function AppPreviewLayout({
       />
       <link
         rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/3.1.0/tabler-icons.min.css"
+        href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.1.0/dist/tabler-icons.min.css"
       />
       {children}
     </div>

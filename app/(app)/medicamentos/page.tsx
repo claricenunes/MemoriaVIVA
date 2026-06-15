@@ -1,48 +1,106 @@
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import TomadoButton from '@/components/medicamentos/tomado-button'
+import AdicionarMedForm from '@/components/medicamentos/adicionar-form'
 import GlassCard from '@/components/shared/glass-card'
+import PageHeader from '@/components/shared/page-header'
 import SectionTitle from '@/components/shared/section-title'
-import MedicationCard from '@/components/shared/medication-card'
 import FloatingAction from '@/components/shared/floating-action'
+import type { Medicamento, MedicamentoRegistro } from '@/lib/types/database'
 
-const MEDS_TODAY = [
-  { name: 'Losartana',   dosage: '50mg • 1 comprimido', time: 'Tomado • 08:00',  status: 'tomado'   as const },
-  { name: 'Vitamina D',  dosage: '2000 UI • 1 cápsula', time: 'Tomado • 08:00',  status: 'tomado'   as const },
-  { name: 'Metformina',  dosage: '500mg • 1 comprimido', time: 'Próximo • 12:00', status: 'proximo'  as const },
-  { name: 'Metformina',  dosage: '500mg • 1 comprimido', time: 'Pendente • 18:00', status: 'pendente' as const },
-  { name: 'Cloridrato',  dosage: '25mg • 1 comprimido', time: 'Pendente • 22:00', status: 'pendente' as const },
-]
-
-const MEDS_LIST = [
-  { name: 'Losartana 50mg',        freq: '1× ao dia', hours: '08:00', icon: 'pill', color: 'terracota', stock: 28 },
-  { name: 'Metformina 500mg',      freq: '2× ao dia', hours: '12:00 / 18:00', icon: 'pill', color: 'azul', stock: 56 },
-  { name: 'Vitamina D 2000 UI',    freq: '1× ao dia', hours: '08:00', icon: 'droplet', color: 'salvia', stock: 60 },
-  { name: 'Cloridrato de Paroxetina', freq: '1× ao dia', hours: '22:00', icon: 'pill', color: 'ambar', stock: 20 },
-]
-
-const ICON_BLOB_CLASS: Record<string, string> = {
-  terracota: 'mv-icon-blob--terracota',
-  azul:      'mv-icon-blob--azul',
-  salvia:    'mv-icon-blob--salvia',
-  ambar:     'mv-icon-blob--ambar',
+function getMedStatus(horario: string, tomado: boolean): 'tomado' | 'proximo' | 'pendente' {
+  if (tomado) return 'tomado'
+  const now = new Date()
+  const [h, m] = horario.split(':').map(Number)
+  const t = new Date(); t.setHours(h, m, 0, 0)
+  return (t.getTime() - now.getTime()) > -1800_000 ? 'proximo' : 'pendente'
 }
 
-export default function MedicamentosPage() {
+const STATUS_COLOR = {
+  tomado:  { color: 'var(--mv-salvia-deep)', bg: 'var(--mv-salvia-soft)' },
+  proximo: { color: 'var(--mv-azul-deep)',   bg: 'var(--mv-azul-soft)'   },
+  pendente:{ color: 'var(--mv-ambar-deep)',  bg: 'var(--mv-ambar-soft)'  },
+}
+
+type MedDia = { med: Medicamento; horario: string; status: 'tomado' | 'proximo' | 'pendente' }
+
+export default async function MedicamentosPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const hoje = new Date().toISOString().split('T')[0]
+
+  let meds: Medicamento[]  = []
+  let medsDia: MedDia[]    = []
+  let dbSetupNeeded         = false
+
+  try {
+    const [r1, r2] = await Promise.all([
+      supabase.from('medicamentos').select('*').eq('user_id', user.id).eq('ativo', true).order('nome'),
+      supabase.from('medicamentos_registros').select('*').eq('user_id', user.id).eq('data', hoje),
+    ])
+
+    // Código 42P01 = tabela não existe no PostgreSQL
+    if (r1.error?.code === '42P01') {
+      dbSetupNeeded = true
+    } else {
+      meds = (r1.data ?? []) as Medicamento[]
+      const takenSet = new Set(
+        (r2.data ?? [] as MedicamentoRegistro[]).map((r: MedicamentoRegistro) => `${r.medicamento_id}:${r.horario_previsto}`)
+      )
+      medsDia = meds.flatMap((med) =>
+        med.horarios.map((horario) => ({
+          med,
+          horario,
+          status: getMedStatus(horario, takenSet.has(`${med.id}:${horario}`)),
+        }))
+      )
+    }
+  } catch (e) {
+    console.error('[MedicamentosPage] query error:', e)
+    dbSetupNeeded = true
+  }
+
+  const tomados   = medsDia.filter((m) => m.status === 'tomado').length
+  const proximos  = medsDia.filter((m) => m.status === 'proximo').length
+  const pendentes = medsDia.filter((m) => m.status === 'pendente').length
+  const proximo   = medsDia.find((m) => m.status === 'proximo')
+
   return (
     <main className="mv-shell">
-      <header className="mv-fade-in" style={{ padding: '8px 4px 4px' }}>
-        <p className="mv-greeting">
-          <i className="ti ti-pill" aria-hidden="true" style={{ marginRight: 6 }} />
-          Seus remédios
-        </p>
-        <h1 className="mv-title">Medicamentos</h1>
-        <p className="mv-subtitle">Sexta-feira, 12 de junho</p>
-      </header>
+      <PageHeader
+        icon="pill"
+        color="ambar"
+        title="Medicamentos"
+        subtitle={new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+      />
+
+      {dbSetupNeeded && (
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', gap: 12,
+          padding: '14px 16px', borderRadius: 'var(--mv-radius-md)',
+          background: 'var(--mv-ambar-soft)', marginTop: 'var(--mv-space-4)',
+          border: '1.5px solid var(--mv-ambar)',
+        }}>
+          <i className="ti ti-tool" aria-hidden="true" style={{ fontSize: 20, color: 'var(--mv-ambar-deep)', flexShrink: 0, marginTop: 2 }} />
+          <div>
+            <p style={{ margin: '0 0 4px', fontWeight: 700, fontSize: 'var(--mv-text-sm)', color: 'var(--mv-ambar-deep)' }}>
+              Banco de dados não configurado
+            </p>
+            <p style={{ margin: 0, fontSize: 'var(--mv-text-xs)', color: 'var(--mv-ambar-deep)', lineHeight: 1.6 }}>
+              Execute <strong>supabase/migrations/001_core_tables.sql</strong> no Supabase SQL Editor para ativar o salvamento de dados.
+            </p>
+          </div>
+        </div>
+      )}
 
       <GlassCard variant="hero" style={{ marginTop: 'var(--mv-space-5)' }}>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--mv-space-3)' }}>
           {[
-            { n: 2, label: 'Tomados', color: 'var(--mv-salvia-deep)', bg: 'var(--mv-salvia-soft)' },
-            { n: 1, label: 'Próximo',  color: 'var(--mv-azul-deep)',   bg: 'var(--mv-azul-soft)'   },
-            { n: 2, label: 'Pendentes', color: 'var(--mv-ambar-deep)', bg: 'var(--mv-ambar-soft)'  },
+            { n: tomados,   label: 'Tomados',   ...STATUS_COLOR.tomado   },
+            { n: proximos,  label: 'Próximos',  ...STATUS_COLOR.proximo  },
+            { n: pendentes, label: 'Pendentes', ...STATUS_COLOR.pendente },
           ].map(({ n, label, color, bg }) => (
             <div key={label} style={{ background: bg, borderRadius: 'var(--mv-radius-md)', padding: '12px 8px', textAlign: 'center' }}>
               <div style={{ fontSize: 'var(--mv-text-display)', fontWeight: 700, color, lineHeight: 1 }}>{n}</div>
@@ -50,42 +108,93 @@ export default function MedicamentosPage() {
             </div>
           ))}
         </div>
-        <div style={{ background: 'rgba(0,0,0,0.04)', borderRadius: 'var(--mv-radius-md)', padding: '10px 14px', marginTop: 'var(--mv-space-3)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <i className="ti ti-clock" aria-hidden="true" style={{ color: 'var(--mv-text-tertiary)', flexShrink: 0 }} />
-          <span style={{ fontSize: 'var(--mv-text-sm)', color: 'var(--mv-text-secondary)' }}>Próximo: <strong style={{ color: 'var(--mv-text-primary)' }}>Metformina às 12:00</strong></span>
-        </div>
+        {proximo && (
+          <div style={{ background: 'rgba(0,0,0,0.04)', borderRadius: 'var(--mv-radius-md)', padding: '10px 14px', marginTop: 'var(--mv-space-3)', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <i className="ti ti-clock" aria-hidden="true" style={{ color: 'var(--mv-text-tertiary)', flexShrink: 0 }} />
+            <span style={{ fontSize: 'var(--mv-text-sm)', color: 'var(--mv-text-secondary)' }}>
+              Próximo: <strong style={{ color: 'var(--mv-text-primary)' }}>{proximo.med.nome} às {proximo.horario}</strong>
+            </span>
+          </div>
+        )}
       </GlassCard>
 
       <SectionTitle title="Hoje" />
-      {MEDS_TODAY.map((med, i) => (
-        <MedicationCard key={i} name={med.name} dosage={med.dosage} time={med.time} status={med.status} />
-      ))}
+      {medsDia.length === 0 ? (
+        <GlassCard>
+          <p style={{ margin: 0, textAlign: 'center', color: 'var(--mv-text-tertiary)', fontSize: 'var(--mv-text-sm)', padding: 'var(--mv-space-3) 0' }}>
+            {dbSetupNeeded
+              ? 'Configure o banco de dados para ver seus remédios aqui.'
+              : 'Nenhum remédio cadastrado ainda.\nAdicione abaixo ↓'}
+          </p>
+        </GlassCard>
+      ) : (
+        <GlassCard>
+          {medsDia.map(({ med, horario, status }, i) => (
+            <div
+              key={`${med.id}-${horario}`}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 'var(--mv-space-3)',
+                paddingBottom: i < medsDia.length - 1 ? 'var(--mv-space-3)' : 0,
+                marginBottom:  i < medsDia.length - 1 ? 'var(--mv-space-3)' : 0,
+                borderBottom:  i < medsDia.length - 1 ? '1px solid var(--mv-border)' : 'none',
+              }}
+            >
+              <div className="mv-icon-blob mv-icon-blob--ambar" style={{ width: 44, height: 44, flexShrink: 0 }}>
+                <i className="ti ti-pill" aria-hidden="true" style={{ fontSize: 18 }} />
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 600, color: 'var(--mv-text-primary)', marginBottom: 2 }}>{med.nome}</div>
+                <div style={{ fontSize: 'var(--mv-text-xs)', color: 'var(--mv-text-secondary)' }}>
+                  {med.dosagem} • {horario}
+                </div>
+              </div>
+              {status === 'tomado' ? (
+                <span style={{ fontSize: 'var(--mv-text-xs)', fontWeight: 700, color: 'var(--mv-salvia-deep)', background: 'var(--mv-salvia-soft)', padding: '4px 10px', borderRadius: 'var(--mv-radius-sm)', flexShrink: 0 }}>
+                  ✓ Tomado
+                </span>
+              ) : (
+                <TomadoButton medicamentoId={med.id} horario={horario} />
+              )}
+            </div>
+          ))}
+        </GlassCard>
+      )}
 
       <SectionTitle title="Todos os meus remédios" />
       <GlassCard>
-        {MEDS_LIST.map((med) => (
-          <div key={med.name} className="mv-agenda-item" style={{ paddingBottom: 'var(--mv-space-3)', marginBottom: 'var(--mv-space-3)', borderBottom: '1px solid var(--mv-border)' }}>
-            <div className={`mv-icon-blob ${ICON_BLOB_CLASS[med.color] ?? 'mv-icon-blob--azul'}`} style={{ width: 44, height: 44 }}>
-              <i className={`ti ti-${med.icon}`} aria-hidden="true" style={{ fontSize: 18 }} />
-            </div>
-            <div style={{ flex: 1 }}>
-              <div className="mv-agenda-label">{med.name}</div>
-              <div style={{ fontSize: 'var(--mv-text-xs)', color: 'var(--mv-text-secondary)', marginTop: 2 }}>
-                {med.freq} • {med.hours}
+        {meds.length === 0 ? (
+          <p style={{ margin: 0, textAlign: 'center', color: 'var(--mv-text-tertiary)', fontSize: 'var(--mv-text-sm)', padding: 'var(--mv-space-2) 0' }}>
+            {dbSetupNeeded ? 'Configure o banco de dados primeiro.' : 'Nenhum remédio cadastrado.'}
+          </p>
+        ) : (
+          meds.map((med, i) => (
+            <div
+              key={med.id}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 'var(--mv-space-3)',
+                paddingBottom: i < meds.length - 1 ? 'var(--mv-space-3)' : 0,
+                marginBottom:  i < meds.length - 1 ? 'var(--mv-space-3)' : 0,
+                borderBottom:  i < meds.length - 1 ? '1px solid var(--mv-border)' : 'none',
+              }}
+            >
+              <div className="mv-icon-blob mv-icon-blob--ambar" style={{ width: 44, height: 44, flexShrink: 0 }}>
+                <i className="ti ti-pill" aria-hidden="true" style={{ fontSize: 18 }} />
               </div>
-              <div style={{ fontSize: 'var(--mv-text-xs)', color: med.stock <= 14 ? 'var(--mv-ambar-deep)' : 'var(--mv-text-tertiary)', marginTop: 2 }}>
-                {med.stock <= 14 ? `⚠️ Estoque baixo — ${med.stock} comprimidos` : `Estoque: ${med.stock} comprimidos`}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 600, color: 'var(--mv-text-primary)' }}>{med.nome}</div>
+                <div style={{ fontSize: 'var(--mv-text-xs)', color: 'var(--mv-text-secondary)', marginTop: 2 }}>
+                  {med.frequencia} • {med.horarios.join(', ')}
+                </div>
+                <div style={{ fontSize: 'var(--mv-text-xs)', color: med.estoque <= 14 ? 'var(--mv-ambar-deep)' : 'var(--mv-text-tertiary)', marginTop: 2 }}>
+                  {med.estoque <= 14
+                    ? `⚠️ Estoque baixo — ${med.estoque} comprimidos`
+                    : `Estoque: ${med.estoque} comprimidos`}
+                </div>
               </div>
             </div>
-            <button type="button" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--mv-text-tertiary)' }}>
-              <i className="ti ti-dots-vertical" aria-hidden="true" style={{ fontSize: 18 }} />
-            </button>
-          </div>
-        ))}
-        <button type="button" className="mv-btn mv-btn--ghost mv-btn--full" style={{ marginTop: 'var(--mv-space-2)' }}>
-          <i className="ti ti-plus" aria-hidden="true" />
-          Adicionar remédio
-        </button>
+          ))
+        )}
+        <AdicionarMedForm />
       </GlassCard>
 
       <FloatingAction variant="add" label="Novo remédio" />

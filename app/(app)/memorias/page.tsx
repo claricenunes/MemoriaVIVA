@@ -1,46 +1,68 @@
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
 import GlassCard from '@/components/shared/glass-card'
+import PageHeader from '@/components/shared/page-header'
 import SectionTitle from '@/components/shared/section-title'
-import MemoryCard from '@/components/shared/memory-card'
 import FloatingAction from '@/components/shared/floating-action'
+import MemoriasLista from '@/components/memorias/lista-client'
+import NovaMemoriaForm from '@/components/memorias/nova-memoria-form'
+import type { Memoria } from '@/lib/types/database'
 
-const CATEGORIES = [
-  { label: 'Todas',      active: true  },
-  { label: '👨‍👩‍👧 Família', active: false },
-  { label: '🌊 Praias',  active: false },
-  { label: '🎓 Estudos', active: false },
-  { label: '✝️ Fé',      active: false },
-]
+export default async function MemoriasPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
 
-const MEMORIES = [
-  { title: 'Viagem para Floripa',              date: 'Verão de 1998', category: 'praia'    as const, preview: 'Aquela semana inesquecível com a família na Praia de Jurerê. As crianças ainda eram pequenas...' },
-  { title: 'Formatura de Medicina da Ana',     date: 'Dezembro de 2010', category: 'familia'  as const, preview: 'Que orgulho ver minha filha receber o diploma. Chorei muito naquele dia...' },
-  { title: 'Minha graduação em Letras',        date: 'Dezembro de 1985', category: 'faculdade' as const, preview: 'Primeiro da família a se formar na universidade. Minha mãe chorou tanto...' },
-  { title: 'Casamento de prata',               date: 'Setembro de 2003', category: 'familia'  as const, preview: 'Renovamos os votos em frente aos filhos e netos. Uma celebração linda...' },
-  { title: 'Natal em família — 2022',          date: 'Dezembro de 2022', category: 'familia'  as const, preview: 'Toda a família reunida na casa da filha. Seis netos brincando no jardim...' },
-  { title: 'Primeira vez no mar',              date: 'Verão de 1973', category: 'praia'    as const, preview: 'Tinha 12 anos quando fui ao litoral pela primeira vez. Assustei com as ondas...' },
-]
+  let memorias: Memoria[] = []
+  let dbSetupNeeded = false
 
-export default function MemoriasPage() {
+  try {
+    const { data, error } = await supabase
+      .from('memorias')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+
+    if (error?.code === '42P01') {
+      dbSetupNeeded = true
+    } else {
+      memorias = (data ?? []) as Memoria[]
+    }
+  } catch (e) {
+    console.error('[MemoriasPage] query error:', e)
+    dbSetupNeeded = true
+  }
+
   return (
     <main className="mv-shell">
-      <header className="mv-fade-in" style={{ padding: '8px 4px 4px' }}>
-        <p className="mv-greeting">
-          <i className="ti ti-photo-heart" aria-hidden="true" style={{ marginRight: 6 }} />
-          Sua história
-        </p>
-        <h1 className="mv-title">Minhas memórias</h1>
-        <p className="mv-subtitle">{MEMORIES.length} recordações guardadas</p>
-      </header>
+      <PageHeader
+        icon="photo-heart"
+        color="terracota"
+        title="Memórias"
+        subtitle={memorias.length > 0 ? memorias.length + ' recordações guardadas' : 'Guarde momentos especiais aqui'}
+      />
 
-      <div className="mv-chips" style={{ marginTop: 'var(--mv-space-5)' }}>
-        {CATEGORIES.map((cat) => (
-          <button key={cat.label} type="button" className={`mv-chip${cat.active ? ' mv-chip--active' : ''}`}>
-            {cat.label}
-          </button>
-        ))}
-      </div>
+      {dbSetupNeeded && (
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', gap: 12,
+          padding: '14px 16px', borderRadius: 'var(--mv-radius-md)',
+          background: 'var(--mv-ambar-soft)', marginTop: 'var(--mv-space-4)',
+          border: '1.5px solid var(--mv-ambar)',
+        }}>
+          <i className="ti ti-tool" aria-hidden="true" style={{ fontSize: 20, color: 'var(--mv-ambar-deep)', flexShrink: 0, marginTop: 2 }} />
+          <div>
+            <p style={{ margin: '0 0 4px', fontWeight: 700, fontSize: 'var(--mv-text-sm)', color: 'var(--mv-ambar-deep)' }}>
+              Banco de dados não configurado
+            </p>
+            <p style={{ margin: 0, fontSize: 'var(--mv-text-xs)', color: 'var(--mv-ambar-deep)', lineHeight: 1.6 }}>
+              Execute <strong>supabase/migrations/002_agenda_memorias.sql</strong> no Supabase SQL Editor.
+            </p>
+          </div>
+        </div>
+      )}
 
-      <GlassCard variant="hero" style={{ marginTop: 'var(--mv-space-3)' }}>
+      {/* Hero card — Minha História */}
+      <GlassCard variant="hero" style={{ marginTop: 'var(--mv-space-4)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--mv-space-3)' }}>
           <div className="mv-icon-blob mv-icon-blob--terracota" style={{ width: 52, height: 52, flexShrink: 0 }}>
             <i className="ti ti-book-2" aria-hidden="true" style={{ fontSize: 22 }} />
@@ -57,10 +79,24 @@ export default function MemoriasPage() {
         </div>
       </GlassCard>
 
-      <SectionTitle title="Todas as memórias" action="Nova memória" />
-      {MEMORIES.map((mem, i) => (
-        <MemoryCard key={i} title={mem.title} date={mem.date} category={mem.category} preview={mem.preview} />
-      ))}
+      <SectionTitle title="Todas as memórias" />
+
+      {dbSetupNeeded ? (
+        <GlassCard>
+          <p style={{ margin: 0, textAlign: 'center', color: 'var(--mv-text-tertiary)', fontSize: 'var(--mv-text-sm)', padding: 'var(--mv-space-3) 0' }}>
+            Configure o banco de dados para guardar suas memórias.
+          </p>
+        </GlassCard>
+      ) : (
+        <>
+          {/* Chips de filtro + lista — estado local no client */}
+          <MemoriasLista memorias={memorias} />
+
+          <GlassCard style={{ marginTop: 'var(--mv-space-4)' }}>
+            <NovaMemoriaForm />
+          </GlassCard>
+        </>
+      )}
 
       <FloatingAction variant="add" label="Nova memória" />
     </main>

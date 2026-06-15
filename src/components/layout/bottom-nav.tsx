@@ -12,9 +12,9 @@ const ITEMS = [
 
 const MAIS_PATHS = [
   '/mais', '/medicamentos', '/memorias', '/financeiro',
-  '/noticias', '/exercicios', '/perfil', '/historia',
-  '/onde-guardei', '/quem-e-quem', '/feito-hoje',
-  '/emergencia', '/assistente',
+  '/noticias', '/exercicios', '/perfil',
+  '/mais/historia', '/mais/onde-guardei', '/mais/quem-e-quem',
+  '/mais/feito-hoje', '/mais/emergencia', '/mais/assistente',
 ]
 
 function isActive(href: string, pathname: string): boolean {

@@ -1,11 +1,12 @@
 import GlassCard from '@/components/shared/glass-card'
+import PageHeader from '@/components/shared/page-header'
 import LogoutButton from '@/components/auth/logout-button'
+import { FontSizeToggle } from '@/components/accessibility/font-size-provider'
 
 const PREFS = [
-  { label: 'Tamanho da fonte',      value: 'Grande',           icon: 'text-size'       },
-  { label: 'Tema',                  value: 'Claro',            icon: 'sun'             },
-  { label: 'Notificações',          value: 'Ativadas',         icon: 'bell'            },
-  { label: 'Lembrete de remédios',  value: '15 min antes',     icon: 'clock'           },
+  { label: 'Tema',                  value: 'Claro',            icon: 'sun'   },
+  { label: 'Notificações',          value: 'Ativadas',         icon: 'bell'  },
+  { label: 'Lembrete de remédios',  value: '15 min antes',     icon: 'clock' },
 ]
 
 const ACCOUNT_ITEMS = [
@@ -18,13 +19,7 @@ const ACCOUNT_ITEMS = [
 export default function PerfilPage() {
   return (
     <main className="mv-shell">
-      <header className="mv-fade-in" style={{ padding: '8px 4px 4px' }}>
-        <p className="mv-greeting">
-          <i className="ti ti-user-circle" aria-hidden="true" style={{ marginRight: 6 }} />
-          Sua conta
-        </p>
-        <h1 className="mv-title">Meu Perfil</h1>
-      </header>
+      <PageHeader icon="user-circle" color="terracota" title="Meu Perfil" />
 
       <GlassCard variant="hero" style={{ marginTop: 'var(--mv-space-5)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--mv-space-4)' }}>
@@ -65,6 +60,21 @@ export default function PerfilPage() {
           <i className="ti ti-edit" aria-hidden="true" />
           Editar perfil
         </button>
+      </GlassCard>
+
+      <p style={{ margin: 'var(--mv-space-5) 0 var(--mv-space-3) 4px', fontSize: 'var(--mv-text-xs)', fontWeight: 700, color: 'var(--mv-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+        Acessibilidade
+      </p>
+      <GlassCard>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--mv-space-3)', marginBottom: 'var(--mv-space-3)' }}>
+          <div className="mv-icon-blob mv-icon-blob--azul" style={{ width: 36, height: 36, flexShrink: 0 }}>
+            <i className="ti ti-text-size" aria-hidden="true" style={{ fontSize: 15 }} />
+          </div>
+          <span style={{ fontWeight: 600, color: 'var(--mv-text-primary)', fontSize: 'var(--mv-text-sm)' }}>
+            Tamanho da fonte
+          </span>
+        </div>
+        <FontSizeToggle />
       </GlassCard>
 
       <p style={{ margin: 'var(--mv-space-5) 0 var(--mv-space-3) 4px', fontSize: 'var(--mv-text-xs)', fontWeight: 700, color: 'var(--mv-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>

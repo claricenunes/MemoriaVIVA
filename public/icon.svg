@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#D98E73"/>
+  <!-- Subtle top highlight -->
+  <rect width="512" height="256" rx="96" fill="#E8A88B" opacity="0.35"/>
+  <!-- Heart shape (white, centered, fits within 120–392 bounds) -->
+  <path
+    d="M256 394
+       C 248 386, 100 294, 100 184
+       C 100 134, 140 94, 188 94
+       C 216 94, 240 108, 256 130
+       C 272 108, 296 94, 324 94
+       C 372 94, 412 134, 412 184
+       C 412 294, 264 386, 256 394 Z"
+    fill="white"
+    opacity="0.95"
+  />
+</svg>

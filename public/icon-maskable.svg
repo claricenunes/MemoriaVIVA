@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Full bleed background (maskable — no rounded corners) -->
+  <rect width="512" height="512" fill="#D98E73"/>
+  <rect width="512" height="256" fill="#E8A88B" opacity="0.35"/>
+  <!-- Heart inset 20% for maskable safe zone (102–410) -->
+  <path
+    d="M256 390
+       C 248 382, 112 296, 112 196
+       C 112 150, 148 112, 192 112
+       C 218 112, 240 124, 256 144
+       C 272 124, 294 112, 320 112
+       C 364 112, 400 150, 400 196
+       C 400 296, 264 382, 256 390 Z"
+    fill="white"
+    opacity="0.95"
+  />
+</svg>

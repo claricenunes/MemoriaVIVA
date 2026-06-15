@@ -1,24 +1,29 @@
+type MemoriaCategoria = 'praia' | 'familia' | 'faculdade' | 'fe' | 'outro'
+
 interface MemoryCardProps {
   title: string
   date: string
-  category: 'praia' | 'familia' | 'faculdade'
+  category: MemoriaCategoria
   preview?: string
 }
 
-const CATEGORY_CONFIG = {
-  praia:     { icon: 'ti-waves',   label: 'Praia',    color: 'azul'      },
-  familia:   { icon: 'ti-users',   label: 'Família',  color: 'terracota' },
-  faculdade: { icon: 'ti-book-2',  label: 'Estudos',  color: 'salvia'    },
-} as const
+const CATEGORY_CONFIG: Record<MemoriaCategoria, { icon: string; label: string; color: 'azul' | 'terracota' | 'salvia' | 'ambar' }> = {
+  praia:     { icon: 'ti-waves',        label: 'Praia',   color: 'azul'      },
+  familia:   { icon: 'ti-users',        label: 'Família', color: 'terracota' },
+  faculdade: { icon: 'ti-book-2',       label: 'Estudos', color: 'salvia'    },
+  fe:        { icon: 'ti-heart',        label: 'Fé',      color: 'ambar'     },
+  outro:     { icon: 'ti-star',         label: 'Outro',   color: 'azul'      },
+}
 
-const ICON_BLOB_CLASS = {
+const ICON_BLOB_CLASS: Record<string, string> = {
   azul:      'mv-icon-blob--azul',
   terracota: 'mv-icon-blob--terracota',
   salvia:    'mv-icon-blob--salvia',
+  ambar:     'mv-icon-blob--ambar',
 }
 
 export default function MemoryCard({ title, date, category, preview }: MemoryCardProps) {
-  const config = CATEGORY_CONFIG[category]
+  const config = CATEGORY_CONFIG[category] ?? CATEGORY_CONFIG.outro
   return (
     <div className="mv-card mv-fade-in" style={{ marginBottom: 'var(--mv-space-3)' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--mv-space-3)' }}>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#D98E73">
+  <title>Sem conexão — Memória Viva</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Atkinson Hyperlegible', system-ui, -apple-system, sans-serif;
+      background: #FAF7F5;
+      color: #3A3530;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100svh;
+      padding: 24px;
+      -webkit-font-smoothing: antialiased;
+    }
+    .card {
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+    }
+    .logo {
+      width: 88px;
+      height: 88px;
+      border-radius: 22px;
+      background: #D98E73;
+      margin: 0 auto 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 44px;
+    }
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 0 0 12px;
+      line-height: 1.3;
+    }
+    p {
+      font-size: 16px;
+      color: #8B8378;
+      line-height: 1.6;
+      margin: 0 0 32px;
+    }
+    button {
+      background: #D98E73;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      padding: 15px 32px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      width: 100%;
+      max-width: 260px;
+      transition: opacity 0.15s;
+    }
+    button:active { opacity: 0.8; }
+    .tip {
+      font-size: 13px;
+      color: #B7AFA4;
+      margin-top: 20px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">🌿</div>
+    <h1>Sem conexão</h1>
+    <p>Você está offline. Conecte-se à internet para acessar o Memória Viva.</p>
+    <button onclick="window.location.reload()">Tentar novamente</button>
+    <p class="tip">As páginas visitadas recentemente podem estar disponíveis no cache.</p>
+  </div>
+</body>
+</html>
