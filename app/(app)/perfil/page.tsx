@@ -154,7 +154,7 @@ export default function PerfilPage() {
       </GlassCard>
 
       <p style={{ textAlign: 'center', fontSize: 'var(--mv-text-xs)', color: 'var(--mv-text-tertiary)', padding: 'var(--mv-space-6) 0 var(--mv-space-4)' }}>
-        Memória Viva v1.0 • eiclaricenunes@gmail.com
+        Memória Viva v1.0 • euclaricenunes@gmail.com
       </p>
     </main>
   )

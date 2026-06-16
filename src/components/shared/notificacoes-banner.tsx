@@ -2,13 +2,23 @@
 
 import { useEffect, useState } from 'react'
 
-type Estado = 'idle' | 'concedido' | 'negado' | 'indisponivel'
+type Estado = 'loading' | 'idle' | 'concedido' | 'negado' | 'indisponivel'
+
+function urlBase64ToUint8Array(base64: string): ArrayBuffer {
+  const padded = base64.replace(/-/g, '+').replace(/_/g, '/')
+  const raw = atob(padded.padEnd(padded.length + (4 - (padded.length % 4)) % 4, '='))
+  const buf = new ArrayBuffer(raw.length)
+  const view = new Uint8Array(buf)
+  for (let i = 0; i < raw.length; i++) view[i] = raw.charCodeAt(i)
+  return buf
+}
 
 export default function NotificacoesBanner() {
-  const [estado, setEstado] = useState<Estado>('indisponivel')
+  const [estado, setEstado] = useState<Estado>('loading')
+  const [salvando, setSalvando] = useState(false)
 
   useEffect(() => {
-    if (!('Notification' in window)) {
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
       setEstado('indisponivel')
       return
     }
@@ -19,19 +29,35 @@ export default function NotificacoesBanner() {
 
   async function ativar() {
     if (!('Notification' in window)) return
-    const perm = await Notification.requestPermission()
-    if (perm === 'granted') {
-      setEstado('concedido')
-      new Notification('Memória Viva', {
-        body: 'Você vai receber lembretes dos seus remédios! 💊',
-        icon: '/icons/icon-192.png',
+    setSalvando(true)
+
+    try {
+      const perm = await Notification.requestPermission()
+      if (perm !== 'granted') { setEstado('negado'); setSalvando(false); return }
+
+      const reg = await navigator.serviceWorker.ready
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly:      true,
+        applicationServerKey: urlBase64ToUint8Array(
+          process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!
+        ),
       })
-    } else {
-      setEstado('negado')
+
+      await fetch('/api/push/subscribe', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ subscription: sub.toJSON() }),
+      })
+
+      setEstado('concedido')
+    } catch (e) {
+      console.error('[push] ativar:', e)
+    } finally {
+      setSalvando(false)
     }
   }
 
-  if (estado === 'indisponivel' || estado === 'concedido') return null
+  if (estado === 'loading' || estado === 'indisponivel' || estado === 'concedido') return null
 
   if (estado === 'negado') {
     return (
@@ -42,7 +68,7 @@ export default function NotificacoesBanner() {
       }}>
         <i className="ti ti-bell-off" aria-hidden="true" style={{ color: 'var(--mv-ambar-deep)', fontSize: 18, flexShrink: 0, marginTop: 1 }} />
         <p style={{ margin: 0, fontSize: 'var(--mv-text-xs)', color: 'var(--mv-ambar-deep)', lineHeight: 1.5 }}>
-          Notificações bloqueadas. Para receber lembretes dos remédios, ative nas configurações do navegador.
+          Notificações bloqueadas. Para receber lembretes dos remédios, ative nas configurações do seu navegador.
         </p>
       </div>
     )
@@ -60,16 +86,17 @@ export default function NotificacoesBanner() {
           Ativar lembretes de remédios
         </p>
         <p style={{ margin: 0, fontSize: 'var(--mv-text-xs)', color: 'var(--mv-azul-deep)', lineHeight: 1.4 }}>
-          Receba notificações no horário certo
+          Notificação 15 min antes do horário
         </p>
       </div>
       <button
         type="button"
         onClick={ativar}
+        disabled={salvando}
         className="mv-btn mv-btn--primary"
-        style={{ padding: '7px 14px', fontSize: 'var(--mv-text-xs)', flexShrink: 0 }}
+        style={{ padding: '7px 14px', fontSize: 'var(--mv-text-xs)', flexShrink: 0, opacity: salvando ? 0.7 : 1 }}
       >
-        Ativar
+        {salvando ? '...' : 'Ativar'}
       </button>
     </div>
   )

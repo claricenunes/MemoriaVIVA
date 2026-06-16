@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import GlassCard from './glass-card'
 
 const PHYSICAL_SCALE = [
@@ -27,12 +27,6 @@ function getMensagem(corpo: number | null, mente: number | null): string {
   return 'Dias difíceis também passam. Você não está sozinha. 💕'
 }
 
-function hasSpeechRecognition(): boolean {
-  return typeof window !== 'undefined' &&
-    !!(  (window as unknown as Record<string, unknown>).SpeechRecognition
-      || (window as unknown as Record<string, unknown>).webkitSpeechRecognition)
-}
-
 export default function EmotionCheckin() {
   const [physical, setPhysical]     = useState<number | null>(null)
   const [mental, setMental]         = useState<number | null>(null)
@@ -40,7 +34,15 @@ export default function EmotionCheckin() {
   const [bookmarked, setBookmarked] = useState(false)
   const [saved, setSaved]           = useState(false)
   const [recording, setRecording]   = useState(false)
+  const [hasSpeech, setHasSpeech]   = useState(false)
   const recogRef = useRef<unknown>(null)
+
+  useEffect(() => {
+    setHasSpeech(
+      !!( (window as unknown as Record<string, unknown>).SpeechRecognition
+        || (window as unknown as Record<string, unknown>).webkitSpeechRecognition)
+    )
+  }, [])
 
   function startVoice() {
     const SR = (window as unknown as Record<string, unknown>).SpeechRecognition
@@ -173,7 +175,7 @@ export default function EmotionCheckin() {
         <p style={{ margin: 0, fontSize: 'var(--mv-text-sm)', fontWeight: 600, color: 'var(--mv-text-secondary)' }}>
           Quer escrever algo? <span style={{ fontWeight: 400 }}>(opcional)</span>
         </p>
-        {hasSpeechRecognition() && (
+        {hasSpeech && (
           <button
             type="button"
             onClick={recording ? stopVoice : startVoice}

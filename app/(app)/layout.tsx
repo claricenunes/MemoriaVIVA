@@ -1,6 +1,6 @@
 import BottomNav from '@/components/layout/bottom-nav'
 import OnboardingModal from '@/components/onboarding/onboarding-modal'
-import FloatingAction from '@/components/shared/floating-action'
+import FloatingActionGuard from '@/components/shared/floating-action-guard'
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -8,7 +8,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <div className="mv-content-area">
         {children}
       </div>
-      <FloatingAction variant="pill" label="Precisa de ajuda?" />
+      <FloatingActionGuard />
       <BottomNav />
       <OnboardingModal />
     </div>

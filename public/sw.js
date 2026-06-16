@@ -1,3 +1,30 @@
+// ─── Push notifications ───────────────────────────────────────────────────────
+self.addEventListener('push', (event) => {
+  const data = event.data?.json() ?? {}
+  event.waitUntil(
+    self.registration.showNotification(data.title ?? 'Memória Viva', {
+      body:    data.body  ?? 'Você tem um lembrete.',
+      icon:    data.icon  ?? '/icon-192.png',
+      badge:   '/icon-192.png',
+      tag:     data.tag   ?? 'mv-reminder',
+      data:    { url: data.url ?? '/medicamentos' },
+      actions: data.actions ?? [],
+    })
+  )
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const url = event.notification.data?.url ?? '/'
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      const existing = list.find((c) => c.url.includes(self.location.origin) && 'focus' in c)
+      if (existing) return existing.focus().then((c) => c.navigate(url))
+      return clients.openWindow(url)
+    })
+  )
+})
+
 // ─── Cache names — bump CACHE_STATIC version on each deploy ──────────────────
 const CACHE_STATIC = 'mv-static-v3'
 const CACHE_PAGES  = 'mv-pages-v2'
