@@ -6,17 +6,11 @@ import SectionTitle from '@/components/shared/section-title'
 import FloatingAction from '@/components/shared/floating-action'
 import CalendarioClient from '@/components/agenda/calendario-client'
 import NovoEventoForm from '@/components/agenda/novo-evento-form'
-import DeletarEventoBtn from '@/components/agenda/deletar-evento-btn'
+import EventoItem from '@/components/agenda/evento-item'
 import type { AgendaEvento } from '@/lib/types/database'
 
 const MESES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 
-const BLOB_CLASS: Record<string, string> = {
-  terracota: 'mv-icon-blob--terracota',
-  azul:      'mv-icon-blob--azul',
-  ambar:     'mv-icon-blob--ambar',
-  salvia:    'mv-icon-blob--salvia',
-}
 
 const LEGEND = [
   { color: 'var(--mv-terracota)',   label: 'Médico'     },
@@ -137,31 +131,7 @@ export default async function AgendaPage({
           </p>
         ) : (
           eventosDia.map((ev, i) => (
-            <div
-              key={ev.id}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 'var(--mv-space-3)',
-                paddingBottom: i < eventosDia.length - 1 ? 'var(--mv-space-3)' : 0,
-                marginBottom:  i < eventosDia.length - 1 ? 'var(--mv-space-3)' : 0,
-                borderBottom:  i < eventosDia.length - 1 ? '1px solid var(--mv-border)' : 'none',
-              }}
-            >
-              <span className="mv-agenda-time" style={{ minWidth: 42, flexShrink: 0 }}>
-                {ev.hora ? ev.hora.slice(0, 5) : '—'}
-              </span>
-              <div className={`mv-icon-blob ${BLOB_CLASS[ev.cor] ?? 'mv-icon-blob--azul'}`} style={{ width: 42, height: 42, flexShrink: 0 }}>
-                <i className={`ti ti-${ev.icone}`} aria-hidden="true" style={{ fontSize: 18 }} />
-              </div>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="mv-agenda-label">{ev.titulo}</div>
-                {ev.detalhes && (
-                  <div style={{ fontSize: 'var(--mv-text-xs)', color: 'var(--mv-text-secondary)', marginTop: 2 }}>
-                    {ev.detalhes}
-                  </div>
-                )}
-              </div>
-              <DeletarEventoBtn eventoId={ev.id} />
-            </div>
+            <EventoItem key={ev.id} ev={ev} separator={i < eventosDia.length - 1} />
           ))
         )}
 

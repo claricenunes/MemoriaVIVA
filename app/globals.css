@@ -81,7 +81,7 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
-html, body { margin: 0; padding: 0; }
+html, body { margin: 0; padding: 0; height: 100%; }
 
 body {
   font-family: var(--mv-font);
@@ -89,14 +89,32 @@ body {
   background: var(--mv-bg);
   line-height: var(--mv-line-height);
   -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+}
+
+.mv-app-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-width: var(--mv-max-width);
+  margin: 0 auto;
+  background: var(--mv-bg);
+}
+
+.mv-content-area {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  position: relative;
 }
 
 .mv-shell {
   max-width: var(--mv-max-width);
   margin: 0 auto;
-  min-height: 100vh;
+  min-height: 100%;
   background: var(--mv-bg);
-  padding: var(--mv-space-5) var(--mv-space-5) 124px;
+  padding: var(--mv-space-5) var(--mv-space-5) var(--mv-space-8);
   position: relative;
 }
 
@@ -299,12 +317,8 @@ body {
    ========================================= */
 
 .mv-bottom-nav {
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  flex-shrink: 0;
   width: 100%;
-  max-width: var(--mv-max-width);
   background: var(--mv-card);
   border-top: 1px solid var(--mv-border);
   display: flex;
@@ -384,6 +398,7 @@ body {
   cursor: pointer;
   font-family: var(--mv-font);
   letter-spacing: 0.01em;
+  text-decoration: none;
   white-space: nowrap;
 }
 

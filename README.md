@@ -16,6 +16,9 @@ redesign do Memória Viva. Não tem relação com o projeto real
    npm run dev
    ```
 
+> Se você quiser rodar o app real com Supabase, crie um arquivo `.env.local` com suas credenciais.
+> Veja `.env.local.example` como modelo.
+
 3. Abra no navegador:
    ```
    http://localhost:3000

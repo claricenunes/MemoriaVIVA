@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import MemoryCard from '@/components/shared/memory-card'
-import DeletarMemoriaBtn from '@/components/memorias/deletar-memoria-btn'
+import MemoriaItem from '@/components/memorias/memoria-item'
 import type { Memoria } from '@/lib/types/database'
 
 const CATS = [
@@ -45,17 +44,7 @@ export default function MemoriasLista({ memorias }: { memorias: Memoria[] }) {
           </p>
         ) : (
           visiveis.map((mem) => (
-            <div key={mem.id} style={{ position: 'relative' }}>
-              <MemoryCard
-                title={mem.titulo}
-                date={mem.data_memoria}
-                category={mem.categoria}
-                preview={mem.conteudo}
-              />
-              <div style={{ position: 'absolute', top: 12, right: 12 }}>
-                <DeletarMemoriaBtn memoriaId={mem.id} />
-              </div>
-            </div>
+            <MemoriaItem key={mem.id} mem={mem} />
           ))
         )}
       </div>

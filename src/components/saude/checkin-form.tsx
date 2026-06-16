@@ -23,31 +23,48 @@ const MENTAL_SCALE = [
 
 interface CheckinFormProps {
   userName?: string
+  initialCorpo?: number | null
+  initialMente?: number | null
+  initialNota?: string | null
+  initialMarcadoMedico?: boolean
+  onCancel?: () => void
 }
 
-export default function CheckinForm({ userName = 'você' }: CheckinFormProps) {
+export default function CheckinForm({
+  userName = 'você',
+  initialCorpo,
+  initialMente,
+  initialNota,
+  initialMarcadoMedico,
+  onCancel,
+}: CheckinFormProps) {
   const [state, formAction, pending] = useActionState(salvarCheckin, null)
-  const [corpo, setCorpo]           = useState<number | null>(null)
-  const [mente, setMente]           = useState<number | null>(null)
-  const [bookmarked, setBookmarked] = useState(false)
+  const [corpo, setCorpo]           = useState<number | null>(initialCorpo ?? null)
+  const [mente, setMente]           = useState<number | null>(initialMente ?? null)
+  const [bookmarked, setBookmarked] = useState(initialMarcadoMedico ?? false)
 
   useEffect(() => {
     if (!state) return
-    if ('success' in state) toast.success('Check-in salvo! Bom dia ☀️')
-    else toast.error(state.error)
+    if ('success' in state) {
+      toast.success(initialCorpo ? 'Check-in atualizado! ☀️' : 'Check-in salvo! Bom dia ☀️')
+      onCancel?.()
+    } else {
+      toast.error(state.error)
+    }
   }, [state])
 
   return (
     <GlassCard variant="hero">
-      <p style={{ margin: 0, fontSize: 'var(--mv-text-lg)', fontWeight: 600 }}>Check-in de hoje ☀️</p>
+      <p style={{ margin: 0, fontSize: 'var(--mv-text-lg)', fontWeight: 600 }}>
+        {initialCorpo ? 'Editar check-in ✏️' : 'Check-in de hoje ☀️'}
+      </p>
       <p style={{ margin: '4px 0 var(--mv-space-4)', fontSize: 'var(--mv-text-sm)', color: 'var(--mv-text-secondary)' }}>
         Como você acordou hoje, {userName}?
       </p>
 
       <form action={formAction}>
-        {/* Valores capturados pelos botões de escala */}
-        <input type="hidden" name="corpo"         value={corpo ?? ''} readOnly />
-        <input type="hidden" name="mente"         value={mente ?? ''} readOnly />
+        <input type="hidden" name="corpo"          value={corpo ?? ''} readOnly />
+        <input type="hidden" name="mente"          value={mente ?? ''} readOnly />
         <input type="hidden" name="marcado_medico" value={String(bookmarked)} readOnly />
 
         {state && 'error' in state && (
@@ -102,6 +119,7 @@ export default function CheckinForm({ userName = 'você' }: CheckinFormProps) {
           name="nota"
           className="mv-diary-textarea"
           placeholder={'Hoje acordei cansada...\nEstou me sentindo melhor...'}
+          defaultValue={initialNota ?? ''}
           rows={3}
         />
 
@@ -120,14 +138,21 @@ export default function CheckinForm({ userName = 'você' }: CheckinFormProps) {
           </div>
         </button>
 
-        <button
-          type="submit"
-          disabled={pending}
-          className="mv-btn mv-btn--primary mv-btn--full"
-          style={{ marginTop: 'var(--mv-space-4)', opacity: pending ? 0.7 : 1 }}
-        >
-          {pending ? 'Salvando...' : 'Salvar meu dia'}
-        </button>
+        <div style={{ display: 'flex', gap: 'var(--mv-space-3)', marginTop: 'var(--mv-space-4)' }}>
+          {onCancel && (
+            <button type="button" onClick={onCancel} className="mv-btn mv-btn--ghost" style={{ flex: 1 }}>
+              Cancelar
+            </button>
+          )}
+          <button
+            type="submit"
+            disabled={pending}
+            className="mv-btn mv-btn--primary"
+            style={{ flex: onCancel ? 2 : 1, opacity: pending ? 0.7 : 1 }}
+          >
+            {pending ? 'Salvando...' : initialCorpo ? 'Atualizar' : 'Salvar meu dia'}
+          </button>
+        </div>
       </form>
     </GlassCard>
   )

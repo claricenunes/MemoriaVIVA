@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import CheckinForm from '@/components/saude/checkin-form'
+import CheckinWidget from '@/components/saude/checkin-widget'
 import MedicationCard from '@/components/shared/medication-card'
 import SectionTitle from '@/components/shared/section-title'
 import GlassCard from '@/components/shared/glass-card'
@@ -95,35 +95,7 @@ export default async function SaudePage() {
       )}
 
       <div style={{ marginTop: 'var(--mv-space-5)' }}>
-        {checkin ? (
-          <GlassCard variant="hero">
-            <p style={{ margin: 0, fontSize: 'var(--mv-text-lg)', fontWeight: 600 }}>✅ Check-in feito hoje!</p>
-            <div style={{ display: 'flex', gap: 'var(--mv-space-3)', marginTop: 'var(--mv-space-4)' }}>
-              {[
-                { label: '🏃 Corpo', value: checkin.corpo, color: 'var(--mv-salvia-deep)', bg: 'var(--mv-salvia-soft)' },
-                { label: '🧠 Mente', value: checkin.mente, color: 'var(--mv-azul-deep)',   bg: 'var(--mv-azul-soft)'   },
-              ].map(({ label, value, color, bg }) => (
-                <div key={label} style={{ flex: 1, background: bg, borderRadius: 'var(--mv-radius-md)', padding: '16px', textAlign: 'center' }}>
-                  <div style={{ fontSize: 11, color, fontWeight: 700, marginBottom: 6 }}>{label}</div>
-                  <div style={{ fontSize: 'var(--mv-text-display)', fontWeight: 600, color, lineHeight: 1 }}>{value}</div>
-                  <div style={{ fontSize: 11, color, marginTop: 4 }}>de 10</div>
-                </div>
-              ))}
-            </div>
-            {checkin.nota && (
-              <p style={{ margin: 'var(--mv-space-4) 0 0', fontSize: 'var(--mv-text-sm)', color: 'var(--mv-text-secondary)', fontStyle: 'italic', lineHeight: 1.55 }}>
-                &ldquo;{checkin.nota}&rdquo;
-              </p>
-            )}
-            {checkin.marcado_medico && (
-              <div style={{ marginTop: 'var(--mv-space-3)', fontSize: 'var(--mv-text-xs)', color: 'var(--mv-azul-deep)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <i className="ti ti-stethoscope" aria-hidden="true" /> Marcado para mostrar ao médico
-              </div>
-            )}
-          </GlassCard>
-        ) : (
-          <CheckinForm />
-        )}
+        <CheckinWidget checkin={checkin} />
       </div>
 
       {medsDia.length > 0 && (
