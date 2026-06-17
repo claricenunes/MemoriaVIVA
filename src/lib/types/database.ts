@@ -57,3 +57,24 @@ export type Memoria = {
   created_at: string
   updated_at: string
 }
+
+export type FinanceiroTransacao = {
+  id: string
+  user_id: string
+  descricao: string
+  valor: number     // positivo = entrada, negativo = saída
+  categoria: string
+  emoji: string
+  data: string      // YYYY-MM-DD
+  created_at: string
+}
+
+export type FinanceiroConta = {
+  id: string
+  user_id: string
+  label: string
+  vencimento: string // YYYY-MM-DD
+  valor: number
+  paga: boolean
+  created_at: string
+}

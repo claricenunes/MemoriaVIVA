@@ -37,18 +37,35 @@ function formatarData(pubDate: string): string {
   } catch { return 'Recente' }
 }
 
-function extrair(xml: string, tag: string): string {
-  const cd = xml.match(new RegExp(`<${tag}>[\\s]*<!\\[CDATA\\[([\\s\\S]*?)\\]\\]>[\\s]*<\\/${tag}>`))
-  if (cd) return cd[1].trim()
-  const pl = xml.match(new RegExp(`<${tag}>([\\s\\S]*?)<\\/${tag}>`))
-  return pl ? pl[1].replace(/<[^>]+>/g, '').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&#\d+;/g,'').trim() : ''
+function limpar(s: string): string {
+  return s
+    .replace(/<!\[CDATA\[/g, '')   // remove CDATA open marker
+    .replace(/\]\]>/g, '')          // remove CDATA close marker
+    .replace(/<[^>]*>/gs, ' ')      // strip HTML/XML tags (s flag = . matches newlines)
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#\d+;/g, '')
+    .replace(/&[a-zA-Z]+;/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function extrair(bloco: string, tag: string): string {
+  // Escapa caracteres especiais do nome da tag (ex: dc:creator)
+  const t = tag.replace(':', '\\:')
+  const m = bloco.match(new RegExp(`<${t}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${t}>`, 'i'))
+  return m ? limpar(m[1]) : ''
 }
 
 export async function fetchNoticias(url: string): Promise<NoticiaItem[]> {
   try {
     const res = await fetch(url, {
-      next: { revalidate: 3600 },
+      next: { revalidate: 1800 },
       headers: { 'User-Agent': 'Mozilla/5.0 (compatible; MemoriaViva/1.0)' },
+      cache: 'no-store',
     })
     if (!res.ok) return []
     const xml   = await res.text()

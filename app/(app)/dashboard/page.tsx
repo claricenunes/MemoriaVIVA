@@ -20,25 +20,70 @@ function formatEventoLabel(data: string, hora: string | null): string {
   return hora ? `${diaLabel} • ${hora.slice(0, 5)}` : diaLabel
 }
 
+type ProximoRemedio = { nome: string; dosagem: string; horario: string } | null
+
+function nomeDisplay(meta: Record<string, string> | undefined, email: string | undefined): string {
+  const nome = meta?.nome ?? meta?.full_name ?? meta?.name ?? ''
+  if (nome) return nome
+  const local = (email ?? '').split('@')[0].replace(/[._-]/g, ' ')
+  return local.replace(/\b\w/g, (c) => c.toUpperCase()) || 'você'
+}
+
 export default async function DashboardPage() {
-  let proximoEvento: AgendaEvento | null = null
+  let proximoEvento:  AgendaEvento | null = null
+  let proximoRemedio: ProximoRemedio      = null
+  let nomeUsuario = 'você'
 
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (user) {
-      const hoje = new Date()
-      const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`
-      const { data } = await supabase
-        .from('agenda_eventos')
-        .select('*')
-        .eq('user_id', user.id)
-        .gte('data', hojeStr)
-        .order('data', { ascending: true })
-        .order('hora', { ascending: true, nullsFirst: false })
-        .limit(1)
-      proximoEvento = data?.[0] ?? null
+      nomeUsuario = nomeDisplay(
+        user.user_metadata as Record<string, string> | undefined,
+        user.email,
+      )
+
+      const agora = new Date()
+      const hojeStr = `${agora.getFullYear()}-${String(agora.getMonth()+1).padStart(2,'0')}-${String(agora.getDate()).padStart(2,'0')}`
+
+      // Brasil = UTC-3 (horário de Brasília)
+      const horaAtual = `${String((agora.getUTCHours() - 3 + 24) % 24).padStart(2, '0')}:${String(agora.getUTCMinutes()).padStart(2, '0')}`
+
+      const [{ data: eventoData }, { data: meds }] = await Promise.all([
+        supabase
+          .from('agenda_eventos')
+          .select('*')
+          .eq('user_id', user.id)
+          .gte('data', hojeStr)
+          .order('data', { ascending: true })
+          .order('hora', { ascending: true, nullsFirst: false })
+          .limit(1),
+        supabase
+          .from('medicamentos')
+          .select('nome, dosagem, horarios')
+          .eq('user_id', user.id)
+          .eq('ativo', true),
+      ])
+
+      proximoEvento = eventoData?.[0] ?? null
+
+      if (meds && meds.length > 0) {
+        type Med = { nome: string; dosagem: string; horarios: string[] }
+        const todos: { med: Med; h: string }[] = (meds as Med[]).flatMap((m) =>
+          (m.horarios ?? []).map((h) => ({ med: m, h }))
+        )
+        todos.sort((a, b) => a.h.localeCompare(b.h))
+
+        const proximo = todos.find(({ h }) => h >= horaAtual) ?? todos[0]
+        if (proximo) {
+          proximoRemedio = {
+            nome:     proximo.med.nome,
+            dosagem:  proximo.med.dosagem,
+            horario:  proximo.h,
+          }
+        }
+      }
     }
   } catch {
     // Supabase não configurado — mostra placeholder
@@ -46,7 +91,7 @@ export default async function DashboardPage() {
 
   return (
     <main className="mv-shell">
-      <HeroCard name="Clarice" />
+      <HeroCard name={nomeUsuario} />
 
       {/* Check-in do dia — elemento principal */}
       <EmotionCheckin />
@@ -104,10 +149,12 @@ export default async function DashboardPage() {
               Próximo remédio
             </p>
             <p style={{ margin: '3px 0 0', fontSize: 'var(--mv-text-md)', fontWeight: 700, color: 'var(--mv-text-primary)' }}>
-              Metformina — 1 comprimido
+              {proximoRemedio
+                ? `${proximoRemedio.nome}${proximoRemedio.dosagem ? ` — ${proximoRemedio.dosagem}` : ''}`
+                : 'Nenhum medicamento'}
             </p>
             <p style={{ margin: '2px 0 0', fontSize: 'var(--mv-text-sm)', color: 'var(--mv-text-secondary)' }}>
-              Às 18:00
+              {proximoRemedio ? `Às ${proximoRemedio.horario}` : 'Adicione na aba de medicamentos'}
             </p>
           </div>
           <i className="ti ti-chevron-right" aria-hidden="true" style={{ color: 'var(--mv-text-tertiary)', fontSize: 22, flexShrink: 0 }} />

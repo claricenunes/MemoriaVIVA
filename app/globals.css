@@ -781,7 +781,8 @@ body {
 .mv-alert-strip { display: flex; align-items: center; gap: var(--mv-space-3); padding: var(--mv-space-3) var(--mv-space-4); border-radius: var(--mv-radius-md); margin-bottom: var(--mv-space-3); border-width: 1.5px; border-style: solid; }
 .mv-alert-strip--ambar { background: var(--mv-ambar-soft); border-color: var(--mv-ambar); color: var(--mv-ambar-deep); }
 .mv-alert-strip--salvia{ background: var(--mv-salvia-soft); border-color: var(--mv-salvia); color: var(--mv-salvia-deep); }
-.mv-alert-strip--azul  { background: var(--mv-azul-soft);  border-color: var(--mv-azul-suave); color: var(--mv-azul-deep); }
+.mv-alert-strip--azul      { background: var(--mv-azul-soft);      border-color: var(--mv-azul-suave);  color: var(--mv-azul-deep); }
+.mv-alert-strip--terracota { background: var(--mv-terracota-soft); border-color: var(--mv-terracota);   color: var(--mv-terracota-deep); }
 .mv-alert-strip-text   { font-size: var(--mv-text-sm); font-weight: 600; flex: 1; }
 
 /* =========================================

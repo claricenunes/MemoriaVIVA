@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import TomadoButton from '@/components/medicamentos/tomado-button'
 import AdicionarMedForm from '@/components/medicamentos/adicionar-form'
+import ExcluirMedButton from '@/components/medicamentos/excluir-button'
 import GlassCard from '@/components/shared/glass-card'
 import PageHeader from '@/components/shared/page-header'
 import SectionTitle from '@/components/shared/section-title'
@@ -208,6 +209,7 @@ export default async function MedicamentosPage() {
                     : `Estoque: ${med.estoque} comprimidos`}
                 </div>
               </div>
+              <ExcluirMedButton id={med.id} nome={med.nome} />
             </div>
           ))
         )}

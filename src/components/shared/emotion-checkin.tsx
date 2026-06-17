@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useActionState, startTransition } from 'react'
 import GlassCard from './glass-card'
+import { salvarCheckin } from '@/actions/saude'
 
 const PHYSICAL_SCALE = [
   { value: 1,  emoji: '😣', label: 'Muito\nmal' },
@@ -32,10 +33,11 @@ export default function EmotionCheckin() {
   const [mental, setMental]         = useState<number | null>(null)
   const [note, setNote]             = useState('')
   const [bookmarked, setBookmarked] = useState(false)
-  const [saved, setSaved]           = useState(false)
   const [recording, setRecording]   = useState(false)
   const [hasSpeech, setHasSpeech]   = useState(false)
   const recogRef = useRef<unknown>(null)
+
+  const [state, dispatch, isPending] = useActionState(salvarCheckin, null)
 
   useEffect(() => {
     setHasSpeech(
@@ -66,7 +68,18 @@ export default function EmotionCheckin() {
     setRecording(false)
   }
 
-  if (saved) {
+  function handleSalvar() {
+    if (!physical || !mental) return
+    const fd = new FormData()
+    fd.append('corpo', String(physical))
+    fd.append('mente', String(mental))
+    fd.append('nota', note)
+    fd.append('marcado_medico', String(bookmarked))
+    startTransition(() => dispatch(fd))
+  }
+
+  // Sucesso — dados persistidos no banco
+  if (state && 'success' in state) {
     return (
       <GlassCard variant="hero">
         <p style={{ margin: 0, fontSize: 'var(--mv-text-lg)', fontWeight: 700 }}>
@@ -88,18 +101,9 @@ export default function EmotionCheckin() {
             <div style={{ fontSize: 11, color: 'var(--mv-azul-deep)' }}>de 10</div>
           </div>
         </div>
-
-        {/* Mensagem personalizada */}
-        <p style={{
-          margin: 'var(--mv-space-4) 0 0',
-          fontSize: 'var(--mv-text-md)',
-          fontWeight: 600,
-          color: 'var(--mv-terracota-deep)',
-          lineHeight: 1.5,
-        }}>
+        <p style={{ margin: 'var(--mv-space-4) 0 0', fontSize: 'var(--mv-text-md)', fontWeight: 600, color: 'var(--mv-terracota-deep)', lineHeight: 1.5 }}>
           {getMensagem(physical, mental)}
         </p>
-
         {note && (
           <p style={{ margin: 'var(--mv-space-3) 0 0', fontSize: 'var(--mv-text-sm)', color: 'var(--mv-text-secondary)', fontStyle: 'italic', lineHeight: 1.5 }}>
             &ldquo;{note}&rdquo;
@@ -133,13 +137,12 @@ export default function EmotionCheckin() {
       </div>
       <div className="mv-checkin-scale">
         {PHYSICAL_SCALE.map((item) => (
-          <button
-            key={item.value}
-            type="button"
+          <button key={item.value} type="button"
             aria-label={item.label.replace('\n', ' ')}
             aria-pressed={physical === item.value}
             className={`mv-checkin-scale-btn${physical === item.value ? ' mv-checkin-scale-btn--selected' : ''}`}
             onClick={() => setPhysical(item.value)}
+            disabled={isPending}
           >
             <span className="mv-checkin-scale-btn-emoji">{item.emoji}</span>
             <span className="mv-checkin-scale-btn-label">{item.label}</span>
@@ -155,13 +158,12 @@ export default function EmotionCheckin() {
       </div>
       <div className="mv-checkin-scale">
         {MENTAL_SCALE.map((item) => (
-          <button
-            key={item.value}
-            type="button"
+          <button key={item.value} type="button"
             aria-label={item.label.replace('\n', ' ')}
             aria-pressed={mental === item.value}
             className={`mv-checkin-scale-btn${mental === item.value ? ' mv-checkin-scale-btn--selected' : ''}`}
             onClick={() => setMental(item.value)}
+            disabled={isPending}
           >
             <span className="mv-checkin-scale-btn-emoji">{item.emoji}</span>
             <span className="mv-checkin-scale-btn-label">{item.label}</span>
@@ -176,10 +178,9 @@ export default function EmotionCheckin() {
           Quer escrever algo? <span style={{ fontWeight: 400 }}>(opcional)</span>
         </p>
         {hasSpeech && (
-          <button
-            type="button"
-            onClick={recording ? stopVoice : startVoice}
+          <button type="button" onClick={recording ? stopVoice : startVoice}
             aria-label={recording ? 'Parar gravação' : 'Ditar por voz'}
+            disabled={isPending}
             style={{
               display: 'flex', alignItems: 'center', gap: 5,
               padding: '6px 12px', borderRadius: 'var(--mv-radius-pill)',
@@ -189,8 +190,7 @@ export default function EmotionCheckin() {
               color: recording ? 'var(--mv-terracota-deep)' : 'var(--mv-text-secondary)',
               cursor: 'pointer', fontSize: 'var(--mv-text-xs)', fontWeight: 600,
               fontFamily: 'var(--mv-font)',
-            }}
-          >
+            }}>
             <i className={recording ? 'ti ti-square-filled' : 'ti ti-microphone'} aria-hidden="true" style={{ fontSize: 15 }} />
             {recording ? 'Parar' : 'Voz'}
           </button>
@@ -202,13 +202,14 @@ export default function EmotionCheckin() {
         value={note}
         onChange={(e) => setNote(e.target.value)}
         rows={3}
+        disabled={isPending}
       />
 
-      <button
-        type="button"
+      <button type="button"
         className={`mv-doctor-toggle${bookmarked ? ' mv-doctor-toggle--active' : ''}`}
         onClick={() => setBookmarked(!bookmarked)}
         style={{ marginTop: 'var(--mv-space-3)' }}
+        disabled={isPending}
       >
         <span className="mv-doctor-toggle-icon">🩺</span>
         <div>
@@ -219,13 +220,19 @@ export default function EmotionCheckin() {
         </div>
       </button>
 
-      <button
-        type="button"
+      {state && 'error' in state && (
+        <p style={{ margin: 'var(--mv-space-3) 0 0', fontSize: 'var(--mv-text-sm)', color: 'var(--mv-terracota-deep)', fontWeight: 600 }}>
+          ⚠️ {state.error}
+        </p>
+      )}
+
+      <button type="button"
         className="mv-btn mv-btn--primary mv-btn--full"
         style={{ marginTop: 'var(--mv-space-4)' }}
-        onClick={() => setSaved(true)}
+        onClick={handleSalvar}
+        disabled={isPending || !physical || !mental}
       >
-        Salvar meu dia
+        {isPending ? 'Salvando…' : 'Salvar meu dia'}
       </button>
     </GlassCard>
   )

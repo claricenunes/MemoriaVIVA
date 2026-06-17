@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import GlassCard from '@/components/shared/glass-card'
 import PageHeader from '@/components/shared/page-header'
 import SectionTitle from '@/components/shared/section-title'
+import { localDateStr, localDateOffset } from '@/lib/dates'
 
 // ─── Vocabulário diário ────────────────────────────────────────────────────
 interface Desafio {
@@ -88,25 +89,25 @@ export default function ExerciciosPage() {
     setLetras(embaralhar(desafio.letras))
 
     // Verifica se completou hoje
-    const hoje = new Date().toISOString().split('T')[0]
+    const hoje = localDateStr()
     const ultimoDia = localStorage.getItem('mv-ex-ultimo') ?? ''
     if (ultimoDia === hoje) setCompletouHoje(true)
 
     // Carrega streak
     const streakSalvo = Number(localStorage.getItem('mv-ex-streak') ?? '0')
-    const ontem = new Date(Date.now() - 86_400_000).toISOString().split('T')[0]
+    const ontem = localDateOffset(-1)
 
     if (ultimoDia === hoje)    setStreak(streakSalvo)
     else if (ultimoDia === ontem) setStreak(streakSalvo) // mantém streak, aguarda completar
     else                          setStreak(0)           // streak quebrado
 
-    // Monta semana (quais dias foram completados)
+    // Monta semana (quais dias foram completados) — usa localDateStr para evitar UTC offset
     const semana: boolean[] = []
     const dow = new Date().getDay() // 0 = Dom
     for (let i = 0; i < 7; i++) {
       const d = new Date()
       d.setDate(d.getDate() - ((dow + 6 - i) % 7))
-      const iso = d.toISOString().split('T')[0]
+      const iso = localDateStr(d)
       semana.push(localStorage.getItem(`mv-ex-${iso}`) === '1')
     }
     setDiasSemana(semana)
@@ -123,7 +124,7 @@ export default function ExerciciosPage() {
     if (formada.toUpperCase() === desafio.palavra) {
       setResultado('correto')
       if (!completouHoje) {
-        const hoje = new Date().toISOString().split('T')[0]
+        const hoje = localDateStr()
         const novoStreak = streak + 1
         localStorage.setItem('mv-ex-ultimo', hoje)
         localStorage.setItem(`mv-ex-${hoje}`, '1')

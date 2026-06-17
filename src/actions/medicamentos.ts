@@ -68,3 +68,23 @@ export async function adicionarMedicamento(
   revalidatePath('/medicamentos')
   return { success: true }
 }
+
+export async function excluirMedicamento(
+  id: string
+): Promise<{ error: string } | { success: true }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Não autenticado' }
+
+  const { error } = await supabase
+    .from('medicamentos')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/medicamentos')
+  revalidatePath('/dashboard')
+  return { success: true }
+}
