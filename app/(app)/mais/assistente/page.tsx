@@ -64,12 +64,6 @@ export default function AssistentePage() {
   }, [])
 
   useEffect(() => {
-    const el = document.querySelector('.mv-content-area')
-    el?.classList.add('mv-content-area--chat')
-    return () => el?.classList.remove('mv-content-area--chat')
-  }, [])
-
-  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [msgs, streamingId])
 
@@ -161,18 +155,22 @@ export default function AssistentePage() {
 
   return (
     <main style={{
+      position: 'fixed',
+      top: 0,
+      left: 'max(0px, calc((100vw - 430px) / 2))',
+      right: 'max(0px, calc((100vw - 430px) / 2))',
+      bottom: 'calc(84px + env(safe-area-inset-bottom))',
       display: 'flex', flexDirection: 'column',
-      flex: 1, minHeight: 0, overflow: 'hidden',
-      maxWidth: 'var(--mv-max-width)',
-      width: '100%',
-      margin: '0 auto', padding: '0 var(--mv-page-px)',
+      overflow: 'hidden',
       background: 'var(--mv-bg)',
+      zIndex: 40,
     }}>
-      {/* Header compacto */}
+      {/* Header fixo */}
       <div style={{
         flexShrink: 0, display: 'flex', alignItems: 'center', gap: 12,
-        paddingTop: 'var(--mv-space-4)', paddingBottom: 'var(--mv-space-3)',
+        padding: 'var(--mv-space-4) var(--mv-space-5) var(--mv-space-3)',
         borderBottom: '1px solid var(--mv-border)',
+        background: 'var(--mv-bg)',
       }}>
         <Link href="/mais" style={{
           display: 'flex', alignItems: 'center', gap: 6,
@@ -196,8 +194,8 @@ export default function AssistentePage() {
         <div style={{ width: 48 }} />
       </div>
 
-      {/* Mensagens */}
-      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingBottom: 'var(--mv-space-3)' }}>
+      {/* Mensagens — área rolável */}
+      <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '0 var(--mv-space-5) var(--mv-space-3)' }}>
         {empty && (
           <div style={{ textAlign: 'center', paddingTop: 'var(--mv-space-2)' }}>
             <div style={{
@@ -259,10 +257,11 @@ export default function AssistentePage() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input */}
+      {/* Input fixo no rodapé */}
       <div style={{
-        flexShrink: 0, paddingBottom: 'var(--mv-space-3)',
-        paddingTop: 'var(--mv-space-3)', borderTop: '1px solid var(--mv-border)',
+        flexShrink: 0,
+        padding: 'var(--mv-space-3) var(--mv-space-5)',
+        borderTop: '1px solid var(--mv-border)',
         background: 'var(--mv-bg)',
       }}>
         <div style={{ display: 'flex', gap: 'var(--mv-space-2)', alignItems: 'flex-end' }}>

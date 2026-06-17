@@ -1,9 +1,49 @@
+import { createClient } from '@/lib/supabase/server'
 import HeroCard from '@/components/shared/hero-card'
 import EmotionCheckin from '@/components/shared/emotion-checkin'
 import SectionTitle from '@/components/shared/section-title'
 import Link from 'next/link'
+import type { AgendaEvento } from '@/lib/types/database'
 
-export default function DashboardPage() {
+function formatEventoLabel(data: string, hora: string | null): string {
+  const hoje  = new Date()
+  const hojeStr   = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`
+  const amanha    = new Date(hoje.getTime() + 86_400_000)
+  const amanhaStr = `${amanha.getFullYear()}-${String(amanha.getMonth()+1).padStart(2,'0')}-${String(amanha.getDate()).padStart(2,'0')}`
+
+  const diaLabel = data === hojeStr
+    ? 'Hoje'
+    : data === amanhaStr
+    ? 'Amanhã'
+    : new Date(data + 'T12:00:00').toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' })
+
+  return hora ? `${diaLabel} • ${hora.slice(0, 5)}` : diaLabel
+}
+
+export default async function DashboardPage() {
+  let proximoEvento: AgendaEvento | null = null
+
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (user) {
+      const hoje = new Date()
+      const hojeStr = `${hoje.getFullYear()}-${String(hoje.getMonth()+1).padStart(2,'0')}-${String(hoje.getDate()).padStart(2,'0')}`
+      const { data } = await supabase
+        .from('agenda_eventos')
+        .select('*')
+        .eq('user_id', user.id)
+        .gte('data', hojeStr)
+        .order('data', { ascending: true })
+        .order('hora', { ascending: true, nullsFirst: false })
+        .limit(1)
+      proximoEvento = data?.[0] ?? null
+    }
+  } catch {
+    // Supabase não configurado — mostra placeholder
+  }
+
   return (
     <main className="mv-shell">
       <HeroCard name="Clarice" />
@@ -36,10 +76,12 @@ export default function DashboardPage() {
               Próximo compromisso
             </p>
             <p style={{ margin: '3px 0 0', fontSize: 'var(--mv-text-md)', fontWeight: 700, color: 'var(--mv-text-primary)' }}>
-              Médico — Dr. Carlos
+              {proximoEvento ? proximoEvento.titulo : 'Nenhum compromisso'}
             </p>
             <p style={{ margin: '2px 0 0', fontSize: 'var(--mv-text-sm)', color: 'var(--mv-text-secondary)' }}>
-              Hoje • 14:00
+              {proximoEvento
+                ? formatEventoLabel(proximoEvento.data, proximoEvento.hora)
+                : 'Adicione um evento na agenda'}
             </p>
           </div>
           <i className="ti ti-chevron-right" aria-hidden="true" style={{ color: 'var(--mv-text-tertiary)', fontSize: 22, flexShrink: 0 }} />

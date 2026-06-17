@@ -110,12 +110,6 @@ body {
   position: relative;
 }
 
-.mv-content-area--chat {
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
 .mv-shell {
   max-width: var(--mv-max-width);
   margin: 0 auto;
